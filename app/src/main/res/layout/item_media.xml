@@ -10,7 +10,7 @@
         android:id="@+id/swipeRevealLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#4CAF50"> <!-- Emerald Green Background -->
+        android:background="@color/accent_teal"> <!-- Teal Background -->
 
         <ImageView
             android:id="@+id/ivSwipeFavorite"
