@@ -24,6 +24,7 @@ class SpectrumView @JvmOverloads constructor(
     private val animators = mutableListOf<ValueAnimator>()
 
     private var isAnimating = false
+    private var shouldAnimate = false
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -39,9 +40,11 @@ class SpectrumView @JvmOverloads constructor(
     }
 
     fun startAnimation() {
+        shouldAnimate = true
         if (isAnimating) return
         isAnimating = true
         
+        animators.forEach { it.cancel() }
         animators.clear()
         for (i in 0 until barCount) {
             val animator = ValueAnimator.ofFloat(0.2f, 0.8f).apply {
@@ -60,6 +63,7 @@ class SpectrumView @JvmOverloads constructor(
     }
 
     fun stopAnimation() {
+        shouldAnimate = false
         isAnimating = false
         animators.forEach { it.cancel() }
         animators.clear()
@@ -69,8 +73,17 @@ class SpectrumView @JvmOverloads constructor(
         invalidate()
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (shouldAnimate) {
+            startAnimation()
+        }
+    }
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        stopAnimation()
+        animators.forEach { it.cancel() }
+        animators.clear()
+        isAnimating = false
     }
 }

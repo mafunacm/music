@@ -27,6 +27,7 @@ class MediaAdapter(
     private var isAnimating: Boolean = false
 
     fun submitList(list: List<Song>) {
+        if (currentList == list) return
         Log.d("MediaAdapter", "submitList: size ${list.size}")
         currentList = list
         notifyDataSetChanged()
@@ -40,16 +41,19 @@ class MediaAdapter(
     }
 
     fun setPlayingItem(id: Long) {
+        if (playingItemId == id) return
         playingItemId = id
         notifyDataSetChanged()
     }
 
     fun setFavorites(ids: Set<Long>) {
+        if (favoriteIds == ids) return
         favoriteIds = ids
         notifyDataSetChanged()
     }
 
     fun setPlaylistName(name: String) {
+        if (currentPlaylistName == name) return
         currentPlaylistName = name
         notifyDataSetChanged()
     }
