@@ -68,7 +68,7 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         binding.playerView.setControllerVisibilityListener(androidx.media3.ui.PlayerView.ControllerVisibilityListener { visibility ->
             binding.btnAspectRatio.visibility = visibility
-            binding.videoControls.visibility = visibility
+            binding.btnBack.visibility = visibility
             if (visibility == View.GONE) binding.tvAspectRatioMode.visibility = View.GONE
         })
 
@@ -93,26 +93,16 @@ class VideoPlayerActivity : AppCompatActivity() {
     }
 
     private fun setupControls() {
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
+
         binding.btnAspectRatio.setOnClickListener {
             currentRatioIndex = (currentRatioIndex + 1) % aspectRatios.size
             val (mode, label) = aspectRatios[currentRatioIndex]
             
             binding.playerView.resizeMode = mode
             showModeIndicator(label)
-        }
-
-        binding.btnVideoNext.setOnClickListener {
-            if (player?.hasNextMediaItem() == true) {
-                player?.seekToNextMediaItem()
-            } else {
-                Toast.makeText(this, "End of playlist", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        binding.btnVideoPrev.setOnClickListener {
-            if (player?.hasPreviousMediaItem() == true) {
-                player?.seekToPreviousMediaItem()
-            }
         }
     }
 
