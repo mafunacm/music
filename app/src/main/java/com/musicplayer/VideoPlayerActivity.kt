@@ -86,8 +86,8 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     private fun setupPlayer() {
         player = ExoPlayer.Builder(this)
-            .setSeekForwardIncrementMs(5000L)
-            .setSeekBackIncrementMs(5000L)
+            .setSeekForwardIncrementMs(15000L)
+            .setSeekBackIncrementMs(15000L)
             .build()
         binding.playerView.player = player
 
@@ -100,6 +100,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_READY) {
                     Log.d("VideoPlayer", "Player state: READY")
+                    updateMarkers()
                 } else if (playbackState == Player.STATE_BUFFERING) {
                     Log.d("VideoPlayer", "Player state: BUFFERING")
                 }
@@ -110,6 +111,11 @@ class VideoPlayerActivity : AppCompatActivity() {
             binding.bottomVideoControls.visibility = visibility
             binding.btnBack.visibility = visibility
             if (visibility == View.GONE) binding.tvAspectRatioMode.visibility = View.GONE
+            if (visibility == View.VISIBLE) updateMarkers()
+            else {
+                binding.markerA.visibility = View.GONE
+                binding.markerB.visibility = View.GONE
+            }
         })
 
         val videoUris = intent.getStringArrayListExtra("VIDEO_URIS")
@@ -132,10 +138,34 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateMarkers() {
+        val duration = player?.duration ?: 0L
+        if (duration <= 0) return
+
+        if (repeatA != -1L) {
+            val progress = repeatA.toFloat() / duration
+            val x = binding.playerView.width * progress
+            binding.markerA.translationX = x
+            binding.markerA.visibility = if (binding.bottomVideoControls.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+        } else {
+            binding.markerA.visibility = View.GONE
+        }
+
+        if (repeatB != -1L) {
+            val progress = repeatB.toFloat() / duration
+            val x = binding.playerView.width * progress
+            binding.markerB.translationX = x
+            binding.markerB.visibility = if (binding.bottomVideoControls.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+        } else {
+            binding.markerB.visibility = View.GONE
+        }
+    }
+
     private fun setupControls() {
         binding.btnBack.setOnClickListener {
             finish()
         }
+        binding.btnBack.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
 
         binding.btnAspectRatio.setOnClickListener {
             currentRatioIndex = (currentRatioIndex + 1) % aspectRatios.size
@@ -143,6 +173,13 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             binding.playerView.resizeMode = mode
             showModeIndicator(label)
+            
+            // Highlight if not standard (Fit)
+            if (currentRatioIndex != 0) {
+                binding.btnAspectRatio.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.color_active))
+            } else {
+                binding.btnAspectRatio.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
+            }
         }
 
         binding.btnABRepeat.setOnClickListener {
@@ -150,12 +187,15 @@ class VideoPlayerActivity : AppCompatActivity() {
             if (repeatA == -1L) {
                 repeatA = pos
                 binding.btnABRepeat.text = "A - "
+                binding.btnABRepeat.setTextColor(getColor(R.color.color_active))
+                updateMarkers()
                 Toast.makeText(this, "A point set", Toast.LENGTH_SHORT).show()
             } else if (repeatB == -1L) {
                 if (pos > repeatA) {
                     repeatB = pos
                     binding.btnABRepeat.text = "A - B"
                     binding.btnABRepeat.setTextColor(getColor(R.color.color_active))
+                    updateMarkers()
                     startABRepeat()
                     Toast.makeText(this, "B point set, repeating", Toast.LENGTH_SHORT).show()
                 } else {
@@ -166,16 +206,11 @@ class VideoPlayerActivity : AppCompatActivity() {
                 repeatA = -1L
                 repeatB = -1L
                 binding.btnABRepeat.text = "A - B"
-                binding.btnABRepeat.setTextColor(getColor(R.color.white))
+                binding.btnABRepeat.setTextColor(getColor(R.color.accent_teal))
+                updateMarkers()
                 Toast.makeText(this, "Repeat cleared", Toast.LENGTH_SHORT).show()
             }
         }
-
-        // Custom seek logic for tap (5s) and long press (10s) 
-        // This is tricky because ExoPlayer's default UI handles these buttons.
-        // We'll use a listener to detect button events if we were using custom layouts,
-        // but since we are using app:use_controller="true", we might need to override the view IDs.
-        // For now, I'll set the increment in setupPlayer.
     }
 
     private fun startABRepeat() {
