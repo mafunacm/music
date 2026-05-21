@@ -39,7 +39,8 @@ class MainActivity : AppCompatActivity() {
         AudioBrowseFragment.newInstance(),
         FolderBrowseFragment.newInstance(),
         VideoFolderBrowseFragment.newInstance(),
-        PlaylistBrowseFragment.newInstance()
+        PlaylistBrowseFragment.newInstance(),
+        com.musicplayer.fragments.BuyFragment.newInstance()
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +89,23 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+        lifecycleScope.launch {
+            viewModel.shuffleModeEnabled.collectLatest { enabled ->
+                val color = if (enabled) getColor(R.color.accent_teal) else getColor(R.color.text_secondary)
+                binding.btnMiniShuffle.imageTintList = android.content.res.ColorStateList.valueOf(color)
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.repeatMode.collectLatest { mode ->
+                val (icon, color) = when (mode) {
+                    androidx.media3.common.Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat to R.color.text_secondary
+                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.accent_teal
+                    else -> R.drawable.ic_repeat_all to R.color.accent_teal
+                }
+                binding.btnMiniRepeat.setImageResource(icon)
+                binding.btnMiniRepeat.imageTintList = android.content.res.ColorStateList.valueOf(getColor(color))
+            }
+        }
     }
 
     private fun setupTabs() {
@@ -96,15 +114,24 @@ class MainActivity : AppCompatActivity() {
         binding.viewPager.isUserInputEnabled = false
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            val customView = layoutInflater.inflate(R.layout.custom_tab, null)
-            val iconView = customView.findViewById<ImageView>(R.id.tabIcon)
-            iconView.setImageResource(when (position) {
-                0 -> R.drawable.ic_tab_music
-                1 -> R.drawable.ic_tab_music_folder
-                2 -> R.drawable.ic_tab_video_folder
-                else -> R.drawable.ic_tab_playlist
-            })
-            tab.customView = customView
+            if (position == 4) {
+                val textView = android.widget.TextView(this)
+                textView.text = "BUY"
+                textView.setTextColor(getColor(R.color.accent_teal))
+                textView.setTypeface(null, android.graphics.Typeface.BOLD)
+                textView.gravity = android.view.Gravity.CENTER
+                tab.customView = textView
+            } else {
+                val customView = layoutInflater.inflate(R.layout.custom_tab, null)
+                val iconView = customView.findViewById<ImageView>(R.id.tabIcon)
+                iconView.setImageResource(when (position) {
+                    0 -> R.drawable.ic_tab_music
+                    1 -> R.drawable.ic_tab_music_folder
+                    2 -> R.drawable.ic_tab_video_folder
+                    else -> R.drawable.ic_tab_playlist
+                })
+                tab.customView = customView
+            }
         }.attach()
         
         binding.tabLayout.tabIconTint = null
@@ -119,6 +146,12 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnMiniPrev.setOnClickListener {
             viewModel.playPrevious()
+        }
+        binding.btnMiniShuffle.setOnClickListener {
+            viewModel.toggleShuffle()
+        }
+        binding.btnMiniRepeat.setOnClickListener {
+            viewModel.toggleRepeatMode()
         }
         binding.miniPlayer.setOnClickListener {
             startActivity(Intent(this, PlaylistActivity::class.java))

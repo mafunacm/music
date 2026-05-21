@@ -274,7 +274,7 @@ class PlaylistActivity : AppCompatActivity() {
                 }
         launch {
             viewModel.shuffleModeEnabled.collect { enabled ->
-                val color = if (enabled) getColor(R.color.primary) else getColor(R.color.text_secondary)
+                val color = if (enabled) getColor(R.color.accent_teal) else getColor(R.color.text_secondary)
                 binding.fullPlayer.btnShuffle.setImageResource(R.drawable.ic_shuffle)
                 binding.fullPlayer.btnShuffle.imageTintList = android.content.res.ColorStateList.valueOf(color)
                 binding.btnShuffleHeader.setImageResource(R.drawable.ic_shuffle)
@@ -285,8 +285,8 @@ class PlaylistActivity : AppCompatActivity() {
             viewModel.repeatMode.collect { mode ->
                 val (icon, color) = when (mode) {
                     androidx.media3.common.Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat to R.color.text_secondary
-                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.primary
-                    else -> R.drawable.ic_repeat_all to R.color.primary
+                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.accent_teal
+                    else -> R.drawable.ic_repeat_all to R.color.accent_teal
                 }
                 binding.fullPlayer.btnRepeat.setImageResource(icon)
                 binding.fullPlayer.btnRepeat.imageTintList = android.content.res.ColorStateList.valueOf(getColor(color))

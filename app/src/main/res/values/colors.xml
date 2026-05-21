@@ -4,6 +4,8 @@
     <color name="primary_variant">#4776E6</color>
     <color name="secondary">#8E54E9</color>
 
+    <color name="accent_teal">#03DAC5</color>
+
     <color name="background">#0F0817</color>
     <color name="surface">#1A1128</color>
     <color name="surface_variant">#2D1B44</color>
