@@ -16,7 +16,7 @@
     <color name="on_surface">#FFFFFF</color>
     <color name="text_secondary">#9E9E9E</color>
 
-    <color name="playing_item_bg">#2D1B44</color>
+    <color name="playing_item_bg">#332900</color> <!-- Dark Solid Gold/Brown for Playing State -->
     <color name="accent_purple">#BB86FC</color>
 
     <color name="black">#FF000000</color>

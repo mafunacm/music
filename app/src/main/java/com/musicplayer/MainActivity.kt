@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
             if (position == 4) {
                 val textView = android.widget.TextView(this)
                 textView.text = "BUY"
-                textView.setTextColor(getColor(R.color.accent_teal))
+                textView.setTextColor(if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.accent_teal))
                 textView.setTypeface(null, android.graphics.Typeface.BOLD)
                 textView.gravity = android.view.Gravity.CENTER
                 tab.customView = textView
@@ -130,34 +130,29 @@ class MainActivity : AppCompatActivity() {
                     2 -> R.drawable.ic_tab_video_folder
                     else -> R.drawable.ic_tab_playlist
                 })
-                iconView.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
+                // Removed tinting to preserve original PNG details
                 tab.customView = customView
             }
         }.attach()
         
         binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
-                updateTabStyle(tab, true)
+                val view = tab.customView
+                if (view is android.widget.TextView) {
+                    view.setTextColor(getColor(R.color.color_active))
+                }
             }
             override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {
-                updateTabStyle(tab, false)
+                val view = tab.customView
+                if (view is android.widget.TextView) {
+                    view.setTextColor(getColor(R.color.accent_teal))
+                }
             }
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
         })
         
         binding.tabLayout.setSelectedTabIndicatorColor(getColor(R.color.color_active))
         binding.tabLayout.tabIconTint = null
-    }
-
-    private fun updateTabStyle(tab: com.google.android.material.tabs.TabLayout.Tab, isSelected: Boolean) {
-        val color = if (isSelected) getColor(R.color.color_active) else getColor(R.color.accent_teal)
-        val view = tab.customView
-        if (view is android.widget.TextView) {
-            view.setTextColor(color)
-        } else if (view != null) {
-            val iconView = view.findViewById<ImageView>(R.id.tabIcon)
-            iconView.imageTintList = android.content.res.ColorStateList.valueOf(color)
-        }
     }
 
     private fun setupPlayerControls() {
