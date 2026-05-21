@@ -69,15 +69,6 @@ class SpectrumView @JvmOverloads constructor(
         invalidate()
     }
 
-    override fun onVisibilityChanged(changedView: View, visibility: Int) {
-        super.onVisibilityChanged(changedView, visibility)
-        if (visibility == VISIBLE) {
-            if (isAnimating) startAnimation()
-        } else {
-            animators.forEach { it.pause() }
-        }
-    }
-
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         stopAnimation()
