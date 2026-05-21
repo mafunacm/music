@@ -53,7 +53,7 @@
                 <LinearLayout
                     android:id="@+id/controlBar"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
@@ -61,22 +61,22 @@
 
                     <ImageButton
                         android:id="@+id/btnShuffleHeader"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Shuffle"
-                        android:src="@android:drawable/ic_menu_sort_by_size"
-                        app:tint="@color/text_secondary" />
+                        android:src="@drawable/ic_shuffle"
+                        app:tint="@color/primary" />
 
                     <ImageButton
                         android:id="@+id/btnRepeatHeader"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Repeat"
-                        android:src="@android:drawable/ic_menu_recent_history"
-                        app:tint="@color/text_secondary" />
+                        android:src="@drawable/ic_repeat"
+                        app:tint="@color/primary" />
 
                     <View
                         android:layout_width="0dp"
@@ -84,18 +84,37 @@
                         android:layout_weight="1" />
 
                     <ImageButton
+                        android:id="@+id/btnPrevHeader"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Previous"
+                        android:src="@android:drawable/ic_media_previous"
+                        app:tint="@color/primary" />
+
+                    <ImageButton
                         android:id="@+id/btnPlayAllHeader"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
+                        android:layout_marginHorizontal="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Play All"
                         android:src="@android:drawable/ic_media_play"
                         app:tint="@color/primary" />
 
                     <ImageButton
+                        android:id="@+id/btnNextHeader"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Next"
+                        android:src="@android:drawable/ic_media_next"
+                        app:tint="@color/primary" />
+
+                    <ImageButton
                         android:id="@+id/btnAddSongsHeader"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Add Songs"

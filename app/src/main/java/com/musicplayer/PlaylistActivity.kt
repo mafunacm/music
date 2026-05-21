@@ -90,6 +90,8 @@ class PlaylistActivity : AppCompatActivity() {
 
         binding.btnShuffleHeader.setOnClickListener { viewModel.toggleShuffle() }
         binding.btnRepeatHeader.setOnClickListener { viewModel.toggleRepeatMode() }
+        binding.btnPrevHeader.setOnClickListener { viewModel.playPrevious() }
+        binding.btnNextHeader.setOnClickListener { viewModel.playNext() }
         binding.btnPlayAllHeader.setOnClickListener {
             if (viewModel.isPlaying.value) {
                 viewModel.togglePlayPause()
@@ -217,6 +219,8 @@ class PlaylistActivity : AppCompatActivity() {
                         binding.btnPlayAllHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
                         binding.btnShuffleHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
                         binding.btnRepeatHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
+                        binding.btnPrevHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
+                        binding.btnNextHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
                         
                         binding.btnAddSongsHeader.visibility = if (isRecent) View.GONE else View.VISIBLE
                     }

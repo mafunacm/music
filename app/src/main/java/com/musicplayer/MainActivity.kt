@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupTabs() {
         val adapter = ViewPagerAdapter(supportFragmentManager, lifecycle, fragments)
         binding.viewPager.adapter = adapter
+        binding.viewPager.isUserInputEnabled = false
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             val customView = layoutInflater.inflate(R.layout.custom_tab, null)
