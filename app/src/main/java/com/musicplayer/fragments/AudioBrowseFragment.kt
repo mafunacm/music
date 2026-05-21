@@ -118,6 +118,10 @@ class AudioBrowseFragment : Fragment() {
                 
                 return dirs
             }
+
+            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
+                return 0.1f // Swipe only 10% to trigger
+            }
         })
         itemTouchHelper.attachToRecyclerView(binding.recyclerView)
     }

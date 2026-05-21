@@ -91,7 +91,7 @@ class MediaAdapter(
         fun bind(song: Song) {
             if (showNumbers) {
                 binding.tvNumber.visibility = View.VISIBLE
-                binding.tvNumber.text = (adapterPosition + 1).toString()
+                binding.tvNumber.text = (bindingAdapterPosition + 1).toString()
             } else {
                 binding.tvNumber.visibility = View.GONE
             }
@@ -123,14 +123,14 @@ class MediaAdapter(
                 .into(binding.ivThumbnail)
 
             binding.rootView.setOnClickListener {
-                if (swipedPosition == adapterPosition) {
+                if (swipedPosition == bindingAdapterPosition) {
                     setSwipedPosition(-1)
                 } else {
                     onItemClick(song)
                 }
             }
 
-            val canBeFavorite = isFavoriteActionEnabled(adapterPosition)
+            val canBeFavorite = isFavoriteActionEnabled(bindingAdapterPosition)
             binding.swipeRevealLayout.visibility = if (canBeFavorite) View.VISIBLE else View.GONE
 
             binding.swipeRevealLayout.setOnClickListener {
@@ -140,7 +140,7 @@ class MediaAdapter(
 
             // Apply translation if this item is swiped
             val revealWidth = -100f * binding.root.context.resources.displayMetrics.density
-            binding.rootView.translationX = if (swipedPosition == adapterPosition) revealWidth else 0f
+            binding.rootView.translationX = if (swipedPosition == bindingAdapterPosition) revealWidth else 0f
         }
     }
 }
