@@ -80,8 +80,15 @@ class MediaAdapter(
 
     fun isFavoriteActionEnabled(position: Int): Boolean {
         if (position !in currentList.indices) return false
-        // Always allow swiping to reveal actions, unless it's a specific edge case
+        val song = currentList[position]
+        // Allow swiping even if it's already a favorite, but the caller (ViewHolder) 
+        // will decide whether to show the star icon.
         return true
+    }
+
+    fun isSongFavorite(position: Int): Boolean {
+        if (position !in currentList.indices) return false
+        return favoriteIds.contains(currentList[position].id)
     }
 
     inner class MediaViewHolder(val binding: ItemMediaBinding) :
@@ -130,10 +137,16 @@ class MediaAdapter(
             }
 
             val canBeFavorite = isFavoriteActionEnabled(bindingAdapterPosition)
+            val isFavorite = isSongFavorite(bindingAdapterPosition)
+            
+            // Show the reveal layout if swiping is allowed, but hide the icon if it's already a favorite
             binding.swipeRevealLayout.visibility = if (canBeFavorite) View.VISIBLE else View.GONE
+            binding.ivSwipeFavorite.visibility = if (isFavorite) View.GONE else View.VISIBLE
 
             binding.swipeRevealLayout.setOnClickListener {
-                onFavoriteClick?.invoke(song)
+                if (!isFavorite) {
+                    onFavoriteClick?.invoke(song)
+                }
                 setSwipedPosition(-1)
             }
 
