@@ -38,20 +38,9 @@ class AudioBrowseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        setupShuffleFab()
         observeViewModel()
     }
 
-    private fun setupShuffleFab() {
-        binding.fabShuffle.visibility = View.VISIBLE
-        binding.fabShuffle.setOnClickListener {
-            val songs = viewModel.songs.value
-            if (songs.isNotEmpty()) {
-                viewModel.playSong(songs.shuffled().first(), songs.shuffled())
-                viewModel.toggleShuffle()
-            }
-        }
-    }
 
     private fun setupRecyclerView() {
         mediaAdapter = MediaAdapter(
