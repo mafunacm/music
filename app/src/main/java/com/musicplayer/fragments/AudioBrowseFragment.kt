@@ -93,13 +93,22 @@ class AudioBrowseFragment : Fragment() {
                 actionState: Int,
                 isCurrentlyActive: Boolean
             ) {
+                val revealWidth = -100f * recyclerView.context.resources.displayMetrics.density
+                // Cap the swipe distance to reveal width if swiping left
+                val translationX = if (dX < revealWidth) revealWidth else dX
+                
                 val foregroundView = viewHolder.itemView.findViewById<View>(R.id.rootView)
-                getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, dX, dY, actionState, isCurrentlyActive)
+                getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, translationX, dY, actionState, isCurrentlyActive)
             }
 
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                val position = viewHolder.bindingAdapterPosition
                 val foregroundView = viewHolder.itemView.findViewById<View>(R.id.rootView)
-                getDefaultUIUtil().clearView(foregroundView)
+                
+                // If this is the swiped item, don't let ItemTouchHelper reset its translation
+                if (position != mediaAdapter.getSwipedPosition()) {
+                    getDefaultUIUtil().clearView(foregroundView)
+                }
             }
 
             override fun getSwipeDirs(

@@ -167,13 +167,19 @@ class PlaylistActivity : AppCompatActivity() {
                 actionState: Int,
                 isCurrentlyActive: Boolean
             ) {
+                val revealWidth = -100f * recyclerView.context.resources.displayMetrics.density
+                val translationX = if (dX < revealWidth) revealWidth else dX
+                
                 val foregroundView = viewHolder.itemView.findViewById<View>(R.id.rootView)
-                getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, dX, dY, actionState, isCurrentlyActive)
+                getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, translationX, dY, actionState, isCurrentlyActive)
             }
 
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                val position = viewHolder.bindingAdapterPosition
                 val foregroundView = viewHolder.itemView.findViewById<View>(R.id.rootView)
-                getDefaultUIUtil().clearView(foregroundView)
+                if (position != mediaAdapter.getSwipedPosition()) {
+                    getDefaultUIUtil().clearView(foregroundView)
+                }
             }
 
             override fun getSwipeDirs(

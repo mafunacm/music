@@ -80,9 +80,8 @@ class MediaAdapter(
 
     fun isFavoriteActionEnabled(position: Int): Boolean {
         if (position !in currentList.indices) return false
-        val song = currentList[position]
-        // Disable if already favorite or if we are in Favorites playlist
-        return !favoriteIds.contains(song.id) && currentPlaylistName != "Favorites"
+        // Always allow swiping to reveal actions, unless it's a specific edge case
+        return true
     }
 
     inner class MediaViewHolder(val binding: ItemMediaBinding) :
