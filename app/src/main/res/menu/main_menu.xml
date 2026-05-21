@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/sort_by_name"
+        android:title="Sort by Name"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sort_by_duration"
+        android:title="Sort by Duration"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sort_by_date_added"
+        android:title="Sort by Date Added"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sort_by_most_played"
+        android:title="Sort by Most Played"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sort_by_recently_played"
+        android:title="Sort by Recently Played"
+        app:showAsAction="never" />
+</menu>

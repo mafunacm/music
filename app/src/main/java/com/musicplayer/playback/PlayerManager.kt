@@ -1,0 +1,151 @@
+package com.musicplayer.playback
+
+import android.content.Context
+import android.util.Log
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.PlaybackException
+import com.musicplayer.models.Song
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class PlayerManager private constructor(context: Context) {
+    private val player = ExoPlayer.Builder(context).build()
+    
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex = _currentIndex.asStateFlow()
+
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying = _isPlaying.asStateFlow()
+    
+    private val _currentSong = MutableStateFlow<Song?>(null)
+    val currentSong = _currentSong.asStateFlow()
+
+    private val _currentPlaylist = MutableStateFlow<List<Song>>(emptyList())
+    val currentPlaylist = _currentPlaylist.asStateFlow()
+
+    private val _shuffleModeEnabled = MutableStateFlow(false)
+    val shuffleModeEnabled = _shuffleModeEnabled.asStateFlow()
+
+    private val _repeatMode = MutableStateFlow(Player.REPEAT_MODE_ALL)
+    val repeatMode = _repeatMode.asStateFlow()
+
+    companion object {
+        @Volatile
+        private var INSTANCE: PlayerManager? = null
+
+        fun getInstance(context: Context): PlayerManager {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: PlayerManager(context.applicationContext).also { INSTANCE = it }
+            }
+        }
+    }
+
+    init {
+        player.repeatMode = Player.REPEAT_MODE_ALL
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val index = player.currentMediaItemIndex
+                _currentIndex.value = index
+                if (index in _currentPlaylist.value.indices) {
+                    _currentSong.value = _currentPlaylist.value[index]
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                _isPlaying.value = isPlaying
+            }
+
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                _shuffleModeEnabled.value = shuffleModeEnabled
+            }
+
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                _repeatMode.value = repeatMode
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e("PlayerManager", "Player error: ${error.message}", error)
+                // If there's an error, try to play the next item
+                if (player.hasNextMediaItem()) {
+                    Log.d("PlayerManager", "Error occurred, skipping to next track")
+                    player.seekToNext()
+                    player.prepare()
+                    player.play()
+                } else {
+                    Log.d("PlayerManager", "Error occurred and no next track, stopping")
+                    player.stop()
+                }
+            }
+        })
+    }
+
+    fun playPlaylist(songs: List<Song>, startIndex: Int = 0) {
+        Log.d("PlayerManager", "playPlaylist called with ${songs.size} songs, startIndex: $startIndex")
+        _currentPlaylist.value = songs.toList()
+        val mediaItems = songs.map { MediaItem.fromUri(it.path) }
+        player.setMediaItems(mediaItems)
+        player.seekTo(startIndex, 0)
+        player.prepare()
+        player.play()
+    }
+
+    fun playNext() {
+        if (player.hasNextMediaItem()) {
+            player.seekToNext()
+            player.play()
+        }
+    }
+
+    fun playPrevious() {
+        if (player.hasPreviousMediaItem()) {
+            player.seekToPrevious()
+            player.play()
+        }
+    }
+
+    fun togglePlayPause() {
+        if (player.isPlaying) {
+            player.pause()
+        } else {
+            player.play()
+        }
+    }
+
+    fun pause() {
+        player.pause()
+    }
+
+    fun toggleShuffle() {
+        player.shuffleModeEnabled = !player.shuffleModeEnabled
+    }
+
+    fun toggleRepeatMode() {
+        player.repeatMode = when (player.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
+            else -> Player.REPEAT_MODE_OFF
+        }
+    }
+
+    fun seekForward() {
+        player.seekTo(player.currentPosition + 10000)
+    }
+
+    fun seekBackward() {
+        player.seekTo(player.currentPosition - 10000)
+    }
+    
+    fun seekTo(positionMs: Long) {
+        player.seekTo(positionMs)
+    }
+    
+    fun getCurrentPosition() = player.currentPosition
+    fun getDuration() = player.duration
+    fun getPlayer() = player
+
+    fun release() {
+        player.release()
+    }
+}
