@@ -106,8 +106,9 @@ class MediaAdapter(
             binding.tvInfo.text = song.artist ?: "Unknown Artist"
 
             val isPlaying = song.id == playingItemId
+            val playingBg = (binding.root.context.getColor(R.color.color_active) and 0x00FFFFFF) or 0x33000000
             binding.rootView.setBackgroundColor(
-                if (isPlaying) binding.root.context.getColor(R.color.playing_item_bg) else binding.root.context.getColor(R.color.background)
+                if (isPlaying) playingBg else binding.root.context.getColor(R.color.background)
             )
             
             if (isPlaying) {

@@ -91,16 +91,16 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             viewModel.shuffleModeEnabled.collectLatest { enabled ->
-                val color = if (enabled) getColor(R.color.accent_teal) else getColor(R.color.text_secondary)
+                val color = if (enabled) getColor(R.color.color_active) else getColor(R.color.accent_teal)
                 binding.btnMiniShuffle.imageTintList = android.content.res.ColorStateList.valueOf(color)
             }
         }
         lifecycleScope.launch {
             viewModel.repeatMode.collectLatest { mode ->
                 val (icon, color) = when (mode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat to R.color.text_secondary
-                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.accent_teal
-                    else -> R.drawable.ic_repeat_all to R.color.accent_teal
+                    androidx.media3.common.Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat to R.color.accent_teal
+                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.color_active
+                    else -> R.drawable.ic_repeat_all to R.color.color_active
                 }
                 binding.btnMiniRepeat.setImageResource(icon)
                 binding.btnMiniRepeat.imageTintList = android.content.res.ColorStateList.valueOf(getColor(color))
@@ -130,11 +130,34 @@ class MainActivity : AppCompatActivity() {
                     2 -> R.drawable.ic_tab_video_folder
                     else -> R.drawable.ic_tab_playlist
                 })
+                iconView.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
                 tab.customView = customView
             }
         }.attach()
         
+        binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
+                updateTabStyle(tab, true)
+            }
+            override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {
+                updateTabStyle(tab, false)
+            }
+            override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
+        })
+        
+        binding.tabLayout.setSelectedTabIndicatorColor(getColor(R.color.color_active))
         binding.tabLayout.tabIconTint = null
+    }
+
+    private fun updateTabStyle(tab: com.google.android.material.tabs.TabLayout.Tab, isSelected: Boolean) {
+        val color = if (isSelected) getColor(R.color.color_active) else getColor(R.color.accent_teal)
+        val view = tab.customView
+        if (view is android.widget.TextView) {
+            view.setTextColor(color)
+        } else if (view != null) {
+            val iconView = view.findViewById<ImageView>(R.id.tabIcon)
+            iconView.imageTintList = android.content.res.ColorStateList.valueOf(color)
+        }
     }
 
     private fun setupPlayerControls() {

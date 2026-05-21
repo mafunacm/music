@@ -5,6 +5,7 @@
     <color name="secondary">#8E54E9</color>
 
     <color name="accent_teal">#03DAC5</color>
+    <color name="color_active">#FFCC00</color> <!-- Vibrant Gold for Active States -->
 
     <color name="background">#0F0817</color>
     <color name="surface">#1A1128</color>
