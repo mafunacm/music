@@ -4,90 +4,52 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.media3.common.util.UnstableApi
 import com.musicplayer.MainActivity
-import com.musicplayer.adapters.MediaAdapter
-import com.musicplayer.databinding.FragmentBrowseBinding
-import com.musicplayer.models.MediaItem
-import com.musicplayer.models.Song
 import com.musicplayer.ui.MainViewModel
-import com.musicplayer.utils.MediaStoreHelper
-import com.musicplayer.utils.PreferencesManager
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.musicplayer.ui.components.TrackRow
+import com.musicplayer.ui.theme.MusicPlayerTheme
 
+@UnstableApi
 class VideoBrowseFragment : Fragment() {
-    private var _binding: FragmentBrowseBinding? = null
-    private val binding get() = _binding!!
-    private lateinit var mediaAdapter: MediaAdapter
     private val viewModel: MainViewModel by activityViewModels()
-    private var videoList = listOf<MediaItem>()
 
     companion object {
         fun newInstance() = VideoBrowseFragment()
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentBrowseBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
-        observeViewModel()
-    }
-
-    private fun setupRecyclerView() {
-        mediaAdapter = MediaAdapter(
-            showNumbers = false,
-            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
-            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) }
-        ) { song ->
-            val mediaItem = videoList.find { it.id == song.id }
-            if (mediaItem != null) {
-                (activity as? MainActivity)?.playMediaItem(mediaItem, videoList)
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MusicPlayerTheme {
+                    val videos by viewModel.videos.collectAsState()
+                    
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(videos) { video ->
+                            TrackRow(
+                                song = video.toSong(),
+                                isActive = false,
+                                isPlaying = false,
+                                onSelect = {
+                                    (activity as? MainActivity)?.playMediaItem(video, videos)
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = mediaAdapter
-        }
-    }
-
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.videos.collectLatest { videos ->
-                videoList = videos
-                mediaAdapter.submitList(videos.map { it.toSong() })
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.currentSong.collectLatest { song ->
-                mediaAdapter.setPlayingItem(song?.id ?: -1)
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isPlaying.collectLatest { isPlaying ->
-                mediaAdapter.setIsAnimating(isPlaying)
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.favoriteIds.collectLatest { ids ->
-                mediaAdapter.setFavorites(ids)
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

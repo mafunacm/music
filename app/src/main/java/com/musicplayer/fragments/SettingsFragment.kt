@@ -4,16 +4,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import com.musicplayer.databinding.FragmentSettingsBinding
-
 import androidx.media3.common.util.UnstableApi
+import com.musicplayer.ui.theme.MusicPlayerTheme
 
 @UnstableApi
 class SettingsFragment : Fragment() {
-    private var _binding: FragmentSettingsBinding? = null
-    private val binding get() = _binding!!
 
     companion object {
         fun newInstance() = SettingsFragment()
@@ -22,29 +27,29 @@ class SettingsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.btnEq.setOnClickListener {
-            EqualizerFragment.newInstance().show(parentFragmentManager, "equalizer")
-        }
-        binding.btnTheme.setOnClickListener {
-            Toast.makeText(requireContext(), "Theme settings coming soon", Toast.LENGTH_SHORT).show()
-        }
-        binding.btnAbout.setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("About")
-                .setMessage("Music Player v1.0\nAn expert-crafted media experience.")
-                .setPositiveButton("OK", null)
-                .show()
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MusicPlayerTheme {
+                    SettingsContent()
+                }
+            }
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    @Composable
+    private fun SettingsContent() {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = {
+                EqualizerFragment.newInstance().show(parentFragmentManager, "equalizer")
+            }) {
+                Text("Equalizer")
+            }
+            // Add more settings buttons here
+        }
     }
 }

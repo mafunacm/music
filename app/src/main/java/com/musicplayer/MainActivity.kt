@@ -38,6 +38,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.updatePadding
+
 @UnstableApi
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -56,17 +59,22 @@ class MainActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            
+            // Apply top padding to the main content container to avoid status bar overlap
+            binding.mainContentContainer.updatePadding(top = systemBars.top)
 
-            // Push player up above nav bar
-            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(binding.playerBottomSheet)
-            behavior.peekHeight = (80 * resources.displayMetrics.density).toInt() + systemBars.bottom
+            // Calculate the Peek Height including the Navigation Bar
+            val density = resources.displayMetrics.density
+            val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
+            // 120dp for the mini player + system nav bar height
+            behavior.peekHeight = (120 * density).toInt() + systemBars.bottom
 
             insets
         }

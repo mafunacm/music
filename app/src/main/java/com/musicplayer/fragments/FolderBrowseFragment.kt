@@ -1,35 +1,38 @@
 package com.musicplayer.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.ConcatAdapter
-import com.musicplayer.adapters.FolderAdapter
-import com.musicplayer.adapters.MediaAdapter
-import com.musicplayer.MainActivity
-import com.musicplayer.databinding.FragmentBrowseBinding
-import com.musicplayer.models.MediaType
-import com.musicplayer.ui.MainViewModel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import java.io.File
 import androidx.media3.common.util.UnstableApi
+import com.musicplayer.models.FolderItem
+import com.musicplayer.ui.MainViewModel
+import com.musicplayer.ui.components.TrackRow
+import com.musicplayer.ui.theme.MusicPlayerTheme
+import java.io.File
 
 @UnstableApi
 class FolderBrowseFragment : Fragment() {
-    private var _binding: FragmentBrowseBinding? = null
-    private val binding get() = _binding!!
-    private lateinit var folderAdapter: FolderAdapter
-    private lateinit var mediaAdapter: MediaAdapter
-    private lateinit var concatAdapter: ConcatAdapter
     private val viewModel: MainViewModel by activityViewModels()
-    private var currentPath: String? = null
+    private var currentPath by mutableStateOf<String?>(null)
 
     companion object {
         fun newInstance() = FolderBrowseFragment()
@@ -38,129 +41,77 @@ class FolderBrowseFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentBrowseBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupRecyclerViews()
-        observeViewModel()
-    }
-
-    private fun setupRecyclerViews() {
-        folderAdapter = FolderAdapter(
-            onFolderClick = { folder -> openFolder(folder.path) },
-            onFolderLongClick = { folder, view -> selectFolder(folder.path, view) }
-        )
-
-        mediaAdapter = MediaAdapter(
-            showNumbers = false,
-            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
-            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) }
-        ) { song ->
-            val listToPlay = mediaAdapter.currentList
-            val name = currentPath?.substringAfterLast(java.io.File.separator) ?: "Music"
-            viewModel.playSong(song, listToPlay, name)
-        }
-
-        concatAdapter = ConcatAdapter(folderAdapter, mediaAdapter)
-
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = concatAdapter
-        }
-    }
-
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.folders.collectLatest {
-                refreshUI()
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.currentSong.collectLatest { song ->
-                mediaAdapter.setPlayingItem(song?.id ?: -1)
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.favoriteIds.collectLatest { ids ->
-                mediaAdapter.setFavorites(ids)
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isPlaying.collectLatest { isPlaying ->
-                mediaAdapter.setIsAnimating(isPlaying)
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MusicPlayerTheme {
+                    FolderContent()
+                }
             }
         }
     }
 
-    private fun refreshUI() {
-        val subfolders = viewModel.getFoldersForPath(currentPath, MediaType.AUDIO)
-        folderAdapter.submitList(subfolders)
-        
+    @Composable
+    private fun FolderContent() {
+        val currentSong by viewModel.currentSong.collectAsState()
+        val isPlaying by viewModel.isPlaying.collectAsState()
+
+        val subfolders = viewModel.getFoldersForPath(currentPath, com.musicplayer.models.MediaType.AUDIO)
         val songs = if (currentPath != null) {
-            viewModel.getMediaForPath(currentPath!!, MediaType.AUDIO)
+            viewModel.getMediaForPath(currentPath!!, com.musicplayer.models.MediaType.AUDIO)
         } else {
             emptyList()
         }
-        mediaAdapter.submitList(songs)
-    }
 
-    private fun openFolder(path: String) {
-        currentPath = path
-        refreshUI()
-    }
-
-    private fun selectFolder(folderPath: String, anchorView: View) {
-        folderAdapter.setSelectedFolder(folderPath)
-        
-        val popup = android.widget.PopupMenu(requireContext(), anchorView)
-        popup.menu.add("Play All")
-        popup.menu.add("Add to Playlist")
-        
-        popup.setOnMenuItemClickListener { item ->
-            when (item.title) {
-                "Play All" -> {
-                    viewModel.playAllInFolder(folderPath)
-                    true
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(subfolders) { folder ->
+                FolderRow(folder) {
+                    currentPath = folder.path
                 }
-                "Add to Playlist" -> {
-                    // Logic for adding to playlist
-                    true
-                }
-                else -> false
+            }
+            items(songs) { song ->
+                TrackRow(
+                    song = song,
+                    isActive = song.id == currentSong?.id,
+                    isPlaying = isPlaying,
+                    onSelect = {
+                        viewModel.playSong(song, songs, currentPath?.substringAfterLast(File.separator) ?: "Music")
+                    }
+                )
             }
         }
-        popup.show()
     }
 
-    fun onFolderSelected(path: String?, items: Any?) {
-        folderAdapter.setSelectedFolder(path)
+    @Composable
+    private fun FolderRow(folder: FolderItem, onClick: () -> Unit) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(Icons.Default.Folder, contentDescription = null, tint = Color.Gray)
+            Column {
+                Text(text = folder.name, color = Color.White, fontSize = 16.sp)
+                Text(text = "${folder.mediaCount} items", color = Color.Gray, fontSize = 12.sp)
+            }
+        }
     }
 
     fun handleBackPress(): Boolean {
         if (currentPath != null) {
             val file = File(currentPath!!)
             val parent = file.parent
-            
-            // Check if parent is still within media roots
-            val roots = viewModel.getFoldersForPath(null, MediaType.AUDIO).map { it.path }
-            
-            if (roots.any { currentPath == it }) {
-                currentPath = null
-            } else {
-                currentPath = parent
-            }
-            
-            refreshUI()
+            val roots = viewModel.getFoldersForPath(null, com.musicplayer.models.MediaType.AUDIO).map { it.path }
+            currentPath = if (roots.any { currentPath == it }) null else parent
             return true
         }
         return false
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    fun onFolderSelected(path: String?, items: Any?) {
+        // No-op or update state if needed
     }
 }
