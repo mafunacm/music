@@ -11,5 +11,6 @@ data class Song(
     val duration: Long,
     val artist: String?,
     val album: String?,
-    val folderPath: String
+    val folderPath: String,
+    val albumId: Long = -1
 ) : Parcelable

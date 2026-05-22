@@ -15,7 +15,9 @@ import com.musicplayer.utils.FolderScanner
 import com.musicplayer.utils.MediaStoreHelper
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val appDao = database.appDao()
@@ -25,6 +27,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val folderScanner = FolderScanner()
     private val playlistManager = PlaylistManager(application)
     private val playerManager = PlayerManager.getInstance(application)
+
+    // Audio Processing Controls
+    fun setEqGain(bandIndex: Int, gain: Float) {
+        playerManager.audioProcessor.bandGains[bandIndex] = gain
+    }
+
+    fun setLUFSEnabled(enabled: Boolean) {
+        playerManager.audioProcessor.lufsEnabled = enabled
+    }
+
+    fun setPsychoacousticEnabled(enabled: Boolean) {
+        playerManager.audioProcessor.psychoEnabled = enabled
+    }
+
+    fun setAdaptiveGenreEnabled(enabled: Boolean) {
+        playerManager.audioProcessor.adaptiveEnabled = enabled
+    }
+
+    fun setStereoWideningEnabled(enabled: Boolean) {
+        playerManager.audioProcessor.stereoEnabled = enabled
+    }
+
+    fun setSpectralTilt(tilt: Float) {
+        playerManager.audioProcessor.tiltValue = tilt
+        playerManager.audioProcessor.tiltEnabled = tilt != 0f
+    }
+
+    fun getAudioSettings() = playerManager.audioProcessor
 
     private val _folders = MutableStateFlow<Map<String, List<Song>>>(emptyMap())
     val folders: StateFlow<Map<String, List<Song>>> = _folders.asStateFlow()

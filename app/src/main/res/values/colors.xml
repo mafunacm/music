@@ -4,7 +4,8 @@
     <color name="primary_variant">#4776E6</color>
     <color name="secondary">#8E54E9</color>
 
-    <color name="accent_teal">#03DAC5</color>
+    <color name="highlight">#03DAC5</color>
+    <color name="domant">#B0B0B0</color> <!-- Light Grey for Inactive/Setting elements -->
     <color name="color_active">#FFCC00</color> <!-- Vibrant Gold for Active States -->
 
     <color name="background">#0F0817</color>
@@ -16,6 +17,7 @@
     <color name="on_surface">#FFFFFF</color>
     <color name="text_secondary">#9E9E9E</color>
 
+    <color name="player_background">#2D1B44</color>
     <color name="playing_item_bg">#332900</color> <!-- Dark Solid Gold/Brown for Playing State -->
     <color name="accent_purple">#BB86FC</color>
 

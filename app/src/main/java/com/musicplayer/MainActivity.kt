@@ -1,46 +1,58 @@
 package com.musicplayer
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuItem
+import android.view.View
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
 import com.musicplayer.adapters.ViewPagerAdapter
 import com.musicplayer.databinding.ActivityMainBinding
-import android.view.View
-import android.widget.ImageView
-import com.bumptech.glide.Glide
+import com.google.common.util.concurrent.ListenableFuture
 import com.musicplayer.fragments.AudioBrowseFragment
 import com.musicplayer.fragments.FolderBrowseFragment
 import com.musicplayer.fragments.PlaylistBrowseFragment
 import com.musicplayer.fragments.VideoBrowseFragment
 import com.musicplayer.fragments.VideoFolderBrowseFragment
+import com.musicplayer.fragments.EventFragment
 import com.musicplayer.models.MediaItem
 import com.musicplayer.models.MediaType
+import com.musicplayer.models.Song
 import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     val viewModel: MainViewModel by viewModels()
+    private val appDao by lazy { com.musicplayer.database.AppDatabase.getDatabase(this).appDao() }
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+
     private val fragments = listOf(
         AudioBrowseFragment.newInstance(),
         FolderBrowseFragment.newInstance(),
         VideoFolderBrowseFragment.newInstance(),
         PlaylistBrowseFragment.newInstance(),
-        com.musicplayer.fragments.BuyFragment.newInstance()
+        com.musicplayer.fragments.BuyFragment.newInstance(),
+        EventFragment.newInstance(),
+        com.musicplayer.fragments.SettingsFragment.newInstance()
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,59 +63,71 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
+            // Push player up above nav bar
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(binding.playerBottomSheet)
+            behavior.peekHeight = (80 * resources.displayMetrics.density).toInt() + systemBars.bottom
+
             insets
         }
 
         setupTabs()
         checkPermissions()
-        setupPlayerControls()
         setupSelectionMenu()
+        setupPlayerBottomSheet()
         observeViewModel()
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
+                if (behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+                    behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                    return
+                }
+
+                val currentFragment = fragments[binding.viewPager.currentItem]
+                if ((currentFragment is FolderBrowseFragment && currentFragment.handleBackPress()) ||
+                    (currentFragment is VideoFolderBrowseFragment && currentFragment.handleBackPress())) {
+                    return
+                }
+                
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
+    }
+
+    private fun setupPlayerBottomSheet() {
+        val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
+        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                // Potential logic for state changes
+            }
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                // Logic for fading elements handled inside PlayerFragment if needed, 
+                // but we'll try to keep it simple here.
+            }
+        })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val sessionToken = SessionToken(this, ComponentName(this, com.musicplayer.services.MediaPlaybackService::class.java))
+        controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        controllerFuture?.let {
+            MediaController.releaseFuture(it)
+        }
     }
 
     private fun observeViewModel() {
-        binding.tvCurrentSong.isSelected = true
-        binding.tvCurrentArtist.isSelected = true
-
         lifecycleScope.launch {
             viewModel.currentSong.collectLatest { song ->
-                if (song != null) {
-                    binding.miniPlayer.visibility = View.VISIBLE
-                    binding.tvCurrentSong.text = song.title
-                    binding.tvCurrentArtist.text = song.artist ?: "Unknown"
-                    Glide.with(this@MainActivity)
-                        .load(song.path)
-                        .placeholder(android.R.drawable.ic_menu_report_image)
-                        .into(binding.ivMiniThumbnail)
-                } else {
-                    binding.miniPlayer.visibility = View.GONE
-                    binding.tvCurrentSong.text = "Not Playing"
-                }
-            }
-        }
-        lifecycleScope.launch {
-            viewModel.isPlaying.collectLatest { isPlaying ->
-                binding.playPauseButton.setImageResource(
-                    if (isPlaying) android.R.drawable.ic_media_pause
-                    else android.R.drawable.ic_media_play
-                )
-            }
-        }
-        lifecycleScope.launch {
-            viewModel.shuffleModeEnabled.collectLatest { enabled ->
-                val color = if (enabled) getColor(R.color.color_active) else getColor(R.color.accent_teal)
-                binding.btnMiniShuffle.imageTintList = android.content.res.ColorStateList.valueOf(color)
-            }
-        }
-        lifecycleScope.launch {
-            viewModel.repeatMode.collectLatest { mode ->
-                val (icon, color) = when (mode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat to R.color.accent_teal
-                    androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one to R.color.color_active
-                    else -> R.drawable.ic_repeat_all to R.color.color_active
-                }
-                binding.btnMiniRepeat.setImageResource(icon)
-                binding.btnMiniRepeat.imageTintList = android.content.res.ColorStateList.valueOf(getColor(color))
+                binding.playerBottomSheet.visibility = if (song != null) View.VISIBLE else View.GONE
             }
         }
     }
@@ -114,10 +138,10 @@ class MainActivity : AppCompatActivity() {
         binding.viewPager.isUserInputEnabled = false
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            if (position == 4) {
+            if (position == 4 || position == 5) {
                 val textView = android.widget.TextView(this)
-                textView.text = "BUY"
-                textView.setTextColor(if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.accent_teal))
+                textView.text = if (position == 4) "BUY" else "EVENT"
+                textView.setTextColor(if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.highlight))
                 textView.setTypeface(null, android.graphics.Typeface.BOLD)
                 textView.gravity = android.view.Gravity.CENTER
                 tab.customView = textView
@@ -128,9 +152,16 @@ class MainActivity : AppCompatActivity() {
                     0 -> R.drawable.ic_tab_music
                     1 -> R.drawable.ic_tab_music_folder
                     2 -> R.drawable.ic_tab_video_folder
-                    else -> R.drawable.ic_tab_playlist
+                    3 -> R.drawable.ic_tab_playlist
+                    else -> R.drawable.ic_tab_settings
                 })
-                // Removed tinting to preserve original PNG details
+                
+                if (position == 6) {
+                    iconView.imageTintList = android.content.res.ColorStateList.valueOf(
+                        if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.domant)
+                    )
+                }
+                
                 tab.customView = customView
             }
         }.attach()
@@ -140,12 +171,18 @@ class MainActivity : AppCompatActivity() {
                 val view = tab.customView
                 if (view is android.widget.TextView) {
                     view.setTextColor(getColor(R.color.color_active))
+                } else if (tab.position == 6) {
+                    val iconView = view?.findViewById<ImageView>(R.id.tabIcon)
+                    iconView?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.color_active))
                 }
             }
             override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {
                 val view = tab.customView
                 if (view is android.widget.TextView) {
-                    view.setTextColor(getColor(R.color.accent_teal))
+                    view.setTextColor(getColor(R.color.highlight))
+                } else if (tab.position == 6) {
+                    val iconView = view?.findViewById<ImageView>(R.id.tabIcon)
+                    iconView?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.domant))
                 }
             }
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
@@ -155,25 +192,55 @@ class MainActivity : AppCompatActivity() {
         binding.tabLayout.tabIconTint = null
     }
 
-    private fun setupPlayerControls() {
-        binding.playPauseButton.setOnClickListener {
-            viewModel.togglePlayPause()
+    fun showAddToPlaylistDialog(song: Song) {
+        lifecycleScope.launch {
+            val playlists = appDao.getAllPlaylistNames()
+            if (playlists.isEmpty()) {
+                Toast.makeText(this@MainActivity, "No custom playlists found. Create one in the Playlists tab.", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+            builder.setTitle("Add to Playlist")
+            
+            builder.setItems(playlists.toTypedArray()) { _, which ->
+                val selectedPlaylist = playlists[which]
+                viewModel.addSongToPlaylist(selectedPlaylist, song)
+                Toast.makeText(this@MainActivity, "Added to $selectedPlaylist", Toast.LENGTH_SHORT).show()
+            }
+            builder.setNegativeButton("Cancel", null)
+            builder.show()
         }
-        binding.btnMiniNext.setOnClickListener {
-            viewModel.playNext()
+    }
+
+    fun showSettingsPopup(view: View) {
+        val popup = android.widget.PopupMenu(this, view)
+        popup.menu.add("Eq")
+        popup.menu.add("Theme")
+        popup.menu.add("About")
+        
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Eq" -> {
+                    com.musicplayer.fragments.EqualizerFragment.newInstance().show(supportFragmentManager, "equalizer")
+                    true
+                }
+                "Theme" -> {
+                    Toast.makeText(this, "Theme settings coming soon", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                "About" -> {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("About")
+                        .setMessage("Music Player v1.0\nAn expert-crafted media experience.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                    true
+                }
+                else -> false
+            }
         }
-        binding.btnMiniPrev.setOnClickListener {
-            viewModel.playPrevious()
-        }
-        binding.btnMiniShuffle.setOnClickListener {
-            viewModel.toggleShuffle()
-        }
-        binding.btnMiniRepeat.setOnClickListener {
-            viewModel.toggleRepeatMode()
-        }
-        binding.miniPlayer.setOnClickListener {
-            startActivity(Intent(this, PlaylistActivity::class.java))
-        }
+        popup.show()
     }
 
     private fun setupSelectionMenu() {
@@ -192,6 +259,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @androidx.media3.common.util.UnstableApi
     fun playMediaItem(item: MediaItem, playlist: List<MediaItem>) {
         if (item.type == MediaType.VIDEO) {
             // Stop audio if video is starting
@@ -210,21 +278,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        val currentFragment = fragments[binding.viewPager.currentItem]
-        if ((currentFragment is FolderBrowseFragment && currentFragment.handleBackPress()) ||
-            (currentFragment is VideoFolderBrowseFragment && currentFragment.handleBackPress())) {
-            return
-        }
-        super.onBackPressed()
-    }
-
     fun showSelectionMenu(folderName: String, onPlayAll: () -> Unit) {
         binding.tvSelectedFolderName.text = folderName
         binding.folderSelectionMenu.visibility = android.view.View.VISIBLE
         binding.btnPlayAll.setOnClickListener {
             onPlayAll()
             hideSelectionMenu()
+            // Opening PlaylistActivity is optional now since we have the bottom sheet player,
+            // but let's keep it if the user wants to see the list.
             startActivity(Intent(this, PlaylistActivity::class.java))
         }
     }
@@ -233,7 +294,8 @@ class MainActivity : AppCompatActivity() {
         val permissions = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             arrayOf(
                 Manifest.permission.READ_MEDIA_AUDIO,
-                Manifest.permission.READ_MEDIA_VIDEO
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.POST_NOTIFICATIONS
             )
         } else {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -259,10 +321,5 @@ class MainActivity : AppCompatActivity() {
         } else {
             viewModel.loadMedia()
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
     }
 }

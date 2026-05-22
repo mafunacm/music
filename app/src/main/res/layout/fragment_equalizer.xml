@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="6-Band Equalizer"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="320dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp">
+
+            <!-- Band 1: 60Hz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band1"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="60Hz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Band 2: 150Hz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band2"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="150Hz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Band 3: 400Hz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band3"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="400Hz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Band 4: 1kHz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band4"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="1kHz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Band 5: 3kHz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band5"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="3kHz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- Band 6: 8kHz -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/band6"
+                    android:layout_width="240dp"
+                    android:layout_height="48dp"
+                    app:labelBehavior="gone"
+                    android:valueFrom="-15"
+                    android:valueTo="15"
+                    android:stepSize="1"
+                    android:value="0"
+                    android:rotation="270" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-80dp"
+                    android:text="8kHz"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Presets"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/presetGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="false" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/surface_variant"
+            android:layout_marginVertical="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AI &amp; Enhancements"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchAdaptive"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI Adaptive Genre EQ"
+            android:textColor="@color/white"
+            android:checked="true" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchLUFS"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LUFS Normalization"
+            android:textColor="@color/white"
+            android:checked="true" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchPsycho"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Psychoacoustic Enhancement"
+            android:textColor="@color/white"
+            android:checked="true" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchStereo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stereo Widening"
+            android:textColor="@color/white"
+            android:checked="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Spectral Tilt (FFT-inspired)"
+            android:textColor="@color/white"
+            android:layout_marginTop="16dp" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sliderTilt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:valueFrom="-1"
+            android:valueTo="1"
+            android:stepSize="0.1"
+            android:value="0" />
+
+        <Button
+            android:id="@+id/btnReset"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset All"
+            android:textColor="@color/highlight"
+            android:layout_gravity="end"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

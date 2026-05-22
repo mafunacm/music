@@ -17,7 +17,9 @@ import com.musicplayer.adapters.PlaylistAdapter
 import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class PlaylistBrowseFragment : Fragment() {
     private var _binding: FragmentBrowseBinding? = null
     private val binding get() = _binding!!

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00000000">
+
+    <!-- Bottom Controls Area -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottomVideoControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#80000000"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Row 1: Playback Controls (Top) -->
+        <LinearLayout
+            android:id="@+id/playbackControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@id/exo_prev"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_previous"
+                app:tint="@color/highlight" />
+
+            <ImageButton
+                android:id="@id/exo_rew"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_rew"
+                app:tint="@color/highlight" />
+
+            <ImageButton
+                android:id="@id/exo_play_pause"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_play"
+                app:tint="@color/highlight" />
+
+            <ImageButton
+                android:id="@id/exo_ffwd"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_ff"
+                app:tint="@color/highlight" />
+
+            <ImageButton
+                android:id="@id/exo_next"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_next"
+                app:tint="@color/highlight" />
+
+        </LinearLayout>
+
+        <!-- Row 2: Duration and Extra Controls -->
+        <LinearLayout
+            android:id="@+id/timeAndExtraRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            app:layout_constraintTop_toBottomOf="@id/playbackControls">
+
+            <TextView
+                android:id="@id/exo_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@id/exo_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="#80FFFFFF"
+                android:textSize="12sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/btnABRepeat"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:paddingHorizontal="12dp"
+                android:text="A - B"
+                android:textColor="@color/highlight"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnAspectRatio"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_crop"
+                app:tint="@color/highlight" />
+
+            <ImageButton
+                android:id="@id/exo_settings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/highlight" />
+
+        </LinearLayout>
+
+        <!-- Row 3: TimeBar and Markers (Bottom) -->
+        <FrameLayout
+            android:id="@+id/progressAndMarkers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/timeAndExtraRow">
+
+            <androidx.media3.ui.DefaultTimeBar
+                android:id="@id/exo_progress"
+                android:layout_width="match_parent"
+                android:layout_height="26dp"
+                app:played_color="@color/highlight"
+                app:unplayed_color="#40FFFFFF"
+                app:buffered_color="#20FFFFFF"
+                app:scrubber_color="@color/highlight" />
+
+            <!-- A-B Markers Overlay -->
+            <FrameLayout
+                android:id="@+id/markerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="26dp">
+
+                <View
+                    android:id="@+id/markerA"
+                    android:layout_width="2dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@color/color_active"
+                    android:visibility="gone" />
+
+                <View
+                    android:id="@+id/markerB"
+                    android:layout_width="2dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@color/color_active"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

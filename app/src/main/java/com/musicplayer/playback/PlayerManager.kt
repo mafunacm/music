@@ -1,17 +1,52 @@
 package com.musicplayer.playback
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.PlaybackException
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaSession
 import com.musicplayer.models.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class PlayerManager private constructor(context: Context) {
-    private val player = ExoPlayer.Builder(context).build()
+@UnstableApi
+class PlayerManager private constructor(private val context: Context) {
+    val audioProcessor = UnifiedAudioProcessor()
+
+    private val player = ExoPlayer.Builder(context)
+        .setRenderersFactory(object : DefaultRenderersFactory(context) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean
+            ): AudioSink? {
+                return DefaultAudioSink.Builder(context)
+                    .setAudioProcessors(arrayOf(audioProcessor))
+                    .build()
+            }
+        })
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            true
+        )
+        .build()
+
+    private var mediaSession: MediaSession? = null
     
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex = _currentIndex.asStateFlow()
@@ -83,13 +118,51 @@ class PlayerManager private constructor(context: Context) {
 
     fun playPlaylist(songs: List<Song>, startIndex: Int = 0) {
         Log.d("PlayerManager", "playPlaylist called with ${songs.size} songs, startIndex: $startIndex")
+        
+        // Start service to ensure playback continues and notification shows
+        context.startService(Intent(context, com.musicplayer.services.MediaPlaybackService::class.java))
+
         _currentPlaylist.value = songs.toList()
-        val mediaItems = songs.map { MediaItem.fromUri(it.path) }
+        val mediaItems = songs.map { song ->
+            val artworkUri = if (song.albumId != -1L) {
+                Uri.parse("content://media/external/audio/albumart/${song.albumId}")
+            } else {
+                Uri.parse("file://" + song.path)
+            }
+            
+            MediaItem.Builder()
+                .setMediaId(song.path)
+                .setUri(song.path)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(song.title)
+                        .setArtist(song.artist)
+                        .setAlbumTitle(song.album)
+                        .setArtworkUri(artworkUri)
+                        .build()
+                )
+                .build()
+        }
         player.setMediaItems(mediaItems)
         player.seekTo(startIndex, 0)
         player.prepare()
         player.play()
     }
+
+    fun setupMediaSession(context: Context) {
+        if (mediaSession == null) {
+            val intent = Intent(context, com.musicplayer.MainActivity::class.java)
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            mediaSession = MediaSession.Builder(context, player)
+                .setSessionActivity(pendingIntent)
+                .build()
+        }
+    }
+
+    fun getMediaSession(): MediaSession? = mediaSession
 
     fun playNext() {
         if (player.hasNextMediaItem()) {
@@ -146,6 +219,13 @@ class PlayerManager private constructor(context: Context) {
     fun getPlayer() = player
 
     fun release() {
+        mediaSession?.release()
+        mediaSession = null
         player.release()
+        synchronized(PlayerManager::class.java) {
+            if (INSTANCE === this) {
+                INSTANCE = null
+            }
+        }
     }
 }

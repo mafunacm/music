@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,210 +7,101 @@
     android:background="@color/background"
     android:fitsSystemWindows="true">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/background"
-        android:fitsSystemWindows="true"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appBarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background"
+            android:fitsSystemWindows="true"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/transparent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:tabGravity="fill"
+                    app:tabIndicatorColor="@color/primary"
+                    app:tabIndicatorHeight="3dp"
+                    app:tabMode="scrollable"
+                    app:tabSelectedTextColor="@color/white"
+                    app:tabTextColor="@color/text_secondary"
+                    app:tabPaddingStart="12dp"
+                    app:tabPaddingEnd="12dp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+        <LinearLayout
+            android:id="@+id/folderSelectionMenu"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:paddingHorizontal="16dp">
+            android:background="@color/primary"
+            android:elevation="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayout"
+            <TextView
+                android:id="@+id/tvSelectedFolderName"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:background="@color/transparent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:tabGravity="center"
-                app:tabIndicatorColor="@color/primary"
-                app:tabIndicatorHeight="3dp"
-                app:tabMode="scrollable"
-                app:tabSelectedTextColor="@color/white"
-                app:tabTextColor="@color/text_secondary"
-                app:tabMaxWidth="56dp"
-                app:tabMinWidth="56dp"
-                app:tabPaddingStart="8dp"
-                app:tabPaddingEnd="8dp" />
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/miniPlayer"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
-
-    <LinearLayout
-        android:id="@+id/folderSelectionMenu"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary"
-        android:elevation="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/tvSelectedFolderName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btnPlayAll"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Play All"
-            android:textColor="@color/white" />
-
-        <ImageButton
-            android:id="@+id/btnCloseSelection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="@color/white" />
-    </LinearLayout>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/miniPlayer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:cardBackgroundColor="@color/surface"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp">
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/miniThumbnailCard"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="0dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                    android:id="@+id/ivMiniThumbnail"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@android:drawable/ic_menu_report_image" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <LinearLayout
-                android:id="@+id/miniControls"
+            <Button
+                android:id="@+id/btnPlayAll"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="@+id/miniThumbnailCard">
+                android:text="Play All"
+                android:textColor="@color/white" />
 
-                <ImageButton
-                    android:id="@+id/btnMiniShuffle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_shuffle"
-                    app:tint="@color/accent_teal" />
-
-                <ImageButton
-                    android:id="@+id/btnMiniPrev"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_media_previous"
-                    app:tint="@color/accent_teal" />
-
-                <ImageButton
-                    android:id="@+id/playPauseButton"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_media_play"
-                    app:tint="@color/accent_teal" />
-
-                <ImageButton
-                    android:id="@+id/btnMiniNext"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_media_next"
-                    app:tint="@color/accent_teal" />
-
-                <ImageButton
-                    android:id="@+id/btnMiniRepeat"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_repeat"
-                    app:tint="@color/accent_teal" />
-
-                <ImageButton
-                    android:id="@+id/btnOpenPlaylist"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_agenda"
-                    app:tint="@color/accent_teal" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvCurrentSong"
-                android:layout_width="0dp"
+            <ImageButton
+                android:id="@+id/btnCloseSelection"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:ellipsize="marquee"
-                android:fadingEdge="horizontal"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:text="Not Playing"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/miniThumbnailCard" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/white" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <TextView
-                android:id="@+id/tvCurrentArtist"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:fadingEdge="horizontal"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:scrollHorizontally="true"
-                android:singleLine="true"
-                android:text="&lt;unknown&gt;"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvCurrentSong" />
+    <FrameLayout
+        android:id="@+id/playerBottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.cardview.widget.CardView>
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/playerContainer"
+            android:name="com.musicplayer.fragments.PlayerFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:layout="@layout/fragment_player" />
+    </FrameLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

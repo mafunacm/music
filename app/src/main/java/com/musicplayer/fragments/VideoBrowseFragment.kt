@@ -5,21 +5,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.musicplayer.MainActivity
 import com.musicplayer.adapters.MediaAdapter
 import com.musicplayer.databinding.FragmentBrowseBinding
 import com.musicplayer.models.MediaItem
 import com.musicplayer.models.Song
+import com.musicplayer.ui.MainViewModel
 import com.musicplayer.utils.MediaStoreHelper
 import com.musicplayer.utils.PreferencesManager
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class VideoBrowseFragment : Fragment() {
     private var _binding: FragmentBrowseBinding? = null
     private val binding get() = _binding!!
     private lateinit var mediaAdapter: MediaAdapter
-    private lateinit var mediaStoreHelper: MediaStoreHelper
-    private lateinit var preferencesManager: PreferencesManager
+    private val viewModel: MainViewModel by activityViewModels()
     private var videoList = listOf<MediaItem>()
 
     companion object {
@@ -37,14 +41,16 @@ class VideoBrowseFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mediaStoreHelper = MediaStoreHelper(requireContext())
-        preferencesManager = PreferencesManager(requireContext())
         setupRecyclerView()
-        loadVideoFiles()
+        observeViewModel()
     }
 
     private fun setupRecyclerView() {
-        mediaAdapter = MediaAdapter(showNumbers = false) { song ->
+        mediaAdapter = MediaAdapter(
+            showNumbers = false,
+            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
+            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) }
+        ) { song ->
             val mediaItem = videoList.find { it.id == song.id }
             if (mediaItem != null) {
                 (activity as? MainActivity)?.playMediaItem(mediaItem, videoList)
@@ -56,31 +62,27 @@ class VideoBrowseFragment : Fragment() {
         }
     }
 
-    private fun loadVideoFiles() {
-        videoList = mediaStoreHelper.getAllVideoFiles()
-        val sortedList = sortMediaList(videoList)
-        mediaAdapter.submitList(sortedList.map { it.toSong() })
-    }
-
-    fun refreshMedia() {
-        loadVideoFiles()
-    }
-
-    fun updatePlayingItem(id: Long) {
-        if (::mediaAdapter.isInitialized) {
-            mediaAdapter.setPlayingItem(id)
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.videos.collectLatest { videos ->
+                videoList = videos
+                mediaAdapter.submitList(videos.map { it.toSong() })
+            }
         }
-    }
-
-    private fun sortMediaList(list: List<MediaItem>): List<MediaItem> {
-        val sortType = preferencesManager.getSortType()
-        return when (sortType) {
-            "NAME" -> list.sortedBy { it.name.lowercase() }
-            "DURATION" -> list.sortedBy { it.duration }
-            "DATE_ADDED" -> list.sortedByDescending { it.dateAdded }
-            "MOST_PLAYED" -> list.sortedByDescending { preferencesManager.getPlayCount(it) }
-            "RECENTLY_PLAYED" -> list.sortedByDescending { preferencesManager.getLastPlayed(it) }
-            else -> list
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentSong.collectLatest { song ->
+                mediaAdapter.setPlayingItem(song?.id ?: -1)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isPlaying.collectLatest { isPlaying ->
+                mediaAdapter.setIsAnimating(isPlaying)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.favoriteIds.collectLatest { ids ->
+                mediaAdapter.setFavorites(ids)
+            }
         }
     }
 

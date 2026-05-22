@@ -19,7 +19,9 @@ import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class VideoFolderBrowseFragment : Fragment() {
     private var _binding: FragmentBrowseBinding? = null
     private val binding get() = _binding!!
@@ -52,7 +54,11 @@ class VideoFolderBrowseFragment : Fragment() {
             onFolderLongClick = { folder, view -> selectFolder(folder.path, view) }
         )
 
-        mediaAdapter = MediaAdapter(showNumbers = false) { song ->
+        mediaAdapter = MediaAdapter(
+            showNumbers = false,
+            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
+            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) }
+        ) { song ->
             val videosInFolder = viewModel.videoFolders.value[currentPath] ?: emptyList()
             val mediaItem = videosInFolder.find { it.id == song.id }
             if (mediaItem != null) {
@@ -69,9 +75,24 @@ class VideoFolderBrowseFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.videoFolders.collectLatest {
                 refreshUI()
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentSong.collectLatest { song ->
+                mediaAdapter.setPlayingItem(song?.id ?: -1)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isPlaying.collectLatest { isPlaying ->
+                mediaAdapter.setIsAnimating(isPlaying)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.favoriteIds.collectLatest { ids ->
+                mediaAdapter.setFavorites(ids)
             }
         }
     }

@@ -12,9 +12,10 @@ data class SongEntity(
     val duration: Long,
     val artist: String?,
     val album: String?,
-    val folderPath: String
+    val folderPath: String,
+    val albumId: Long = -1
 ) {
-    fun toSong() = Song(id, title, path, duration, artist, album, folderPath)
+    fun toSong() = Song(id, title, path, duration, artist, album, folderPath, albumId)
 
     companion object {
         fun fromSong(song: Song) = SongEntity(
@@ -24,7 +25,8 @@ data class SongEntity(
             duration = song.duration,
             artist = song.artist,
             album = song.album,
-            folderPath = song.folderPath
+            folderPath = song.folderPath,
+            albumId = song.albumId
         )
     }
 }

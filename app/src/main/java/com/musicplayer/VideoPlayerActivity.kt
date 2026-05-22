@@ -8,6 +8,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -22,6 +25,13 @@ import kotlinx.coroutines.*
 class VideoPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVideoPlayerBinding
     private var player: ExoPlayer? = null
+
+    private val bottomVideoControls: View? by lazy { binding.playerView.findViewById(R.id.bottomVideoControls) }
+    private val progressAndMarkers: View? by lazy { binding.playerView.findViewById(R.id.progressAndMarkers) }
+    private val markerA: View? by lazy { binding.playerView.findViewById(R.id.markerA) }
+    private val markerB: View? by lazy { binding.playerView.findViewById(R.id.markerB) }
+    private val btnAspectRatio: android.widget.ImageButton? by lazy { binding.playerView.findViewById(R.id.btnAspectRatio) }
+    private val btnABRepeat: android.widget.TextView? by lazy { binding.playerView.findViewById(R.id.btnABRepeat) }
 
     private var repeatA: Long = -1L
     private var repeatB: Long = -1L
@@ -40,9 +50,11 @@ class VideoPlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Hide status bar and navigation bar for full screen video
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         binding = ActivityVideoPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -57,8 +69,10 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     private fun setupGestureDetection() {
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-                if (distanceX != 0f && Math.abs(distanceX) > Math.abs(distanceY)) {
+                if (distanceX != 0f && kotlin.math.abs(distanceX) > kotlin.math.abs(distanceY)) {
                     val seekAmount = -(distanceX * 100).toLong() // Scale distance to seek time
                     player?.let {
                         it.seekTo(it.currentPosition + seekAmount)
@@ -108,14 +122,10 @@ class VideoPlayerActivity : AppCompatActivity() {
         })
 
         binding.playerView.setControllerVisibilityListener(androidx.media3.ui.PlayerView.ControllerVisibilityListener { visibility ->
-            binding.bottomVideoControls.visibility = visibility
+            bottomVideoControls?.visibility = visibility
             binding.btnBack.visibility = visibility
             if (visibility == View.GONE) binding.tvAspectRatioMode.visibility = View.GONE
             if (visibility == View.VISIBLE) updateMarkers()
-            else {
-                binding.markerA.visibility = View.GONE
-                binding.markerB.visibility = View.GONE
-            }
         })
 
         val videoUris = intent.getStringArrayListExtra("VIDEO_URIS")
@@ -145,19 +155,19 @@ class VideoPlayerActivity : AppCompatActivity() {
         if (repeatA != -1L) {
             val progress = repeatA.toFloat() / duration
             val x = binding.playerView.width * progress
-            binding.markerA.translationX = x
-            binding.markerA.visibility = if (binding.bottomVideoControls.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            markerA?.translationX = x
+            markerA?.visibility = View.VISIBLE
         } else {
-            binding.markerA.visibility = View.GONE
+            markerA?.visibility = View.GONE
         }
 
         if (repeatB != -1L) {
             val progress = repeatB.toFloat() / duration
             val x = binding.playerView.width * progress
-            binding.markerB.translationX = x
-            binding.markerB.visibility = if (binding.bottomVideoControls.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            markerB?.translationX = x
+            markerB?.visibility = View.VISIBLE
         } else {
-            binding.markerB.visibility = View.GONE
+            markerB?.visibility = View.GONE
         }
     }
 
@@ -165,9 +175,9 @@ class VideoPlayerActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener {
             finish()
         }
-        binding.btnBack.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
+        binding.btnBack.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.highlight))
 
-        binding.btnAspectRatio.setOnClickListener {
+        btnAspectRatio?.setOnClickListener {
             currentRatioIndex = (currentRatioIndex + 1) % aspectRatios.size
             val (mode, label) = aspectRatios[currentRatioIndex]
 
@@ -176,25 +186,25 @@ class VideoPlayerActivity : AppCompatActivity() {
             
             // Highlight if not standard (Fit)
             if (currentRatioIndex != 0) {
-                binding.btnAspectRatio.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.color_active))
+                btnAspectRatio?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.color_active))
             } else {
-                binding.btnAspectRatio.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.accent_teal))
+                btnAspectRatio?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.highlight))
             }
         }
 
-        binding.btnABRepeat.setOnClickListener {
+        btnABRepeat?.setOnClickListener {
             val pos = player?.currentPosition ?: 0L
             if (repeatA == -1L) {
                 repeatA = pos
-                binding.btnABRepeat.text = "A - "
-                binding.btnABRepeat.setTextColor(getColor(R.color.color_active))
+                btnABRepeat?.text = "A - "
+                btnABRepeat?.setTextColor(getColor(R.color.color_active))
                 updateMarkers()
                 Toast.makeText(this, "A point set", Toast.LENGTH_SHORT).show()
             } else if (repeatB == -1L) {
                 if (pos > repeatA) {
                     repeatB = pos
-                    binding.btnABRepeat.text = "A - B"
-                    binding.btnABRepeat.setTextColor(getColor(R.color.color_active))
+                    btnABRepeat?.text = "A - B"
+                    btnABRepeat?.setTextColor(getColor(R.color.color_active))
                     updateMarkers()
                     startABRepeat()
                     Toast.makeText(this, "B point set, repeating", Toast.LENGTH_SHORT).show()
@@ -205,8 +215,8 @@ class VideoPlayerActivity : AppCompatActivity() {
                 stopABRepeat()
                 repeatA = -1L
                 repeatB = -1L
-                binding.btnABRepeat.text = "A - B"
-                binding.btnABRepeat.setTextColor(getColor(R.color.accent_teal))
+                btnABRepeat?.text = "A - B"
+                btnABRepeat?.setTextColor(getColor(R.color.highlight))
                 updateMarkers()
                 Toast.makeText(this, "Repeat cleared", Toast.LENGTH_SHORT).show()
             }

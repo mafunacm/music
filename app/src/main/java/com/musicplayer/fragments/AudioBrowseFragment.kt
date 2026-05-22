@@ -17,7 +17,9 @@ import com.musicplayer.databinding.FragmentBrowseBinding
 import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class AudioBrowseFragment : Fragment() {
     private var _binding: FragmentBrowseBinding? = null
     private val binding get() = _binding!!
@@ -39,6 +41,34 @@ class AudioBrowseFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         observeViewModel()
+        setupFab()
+    }
+
+    private fun setupFab() {
+        binding.fabSettings.visibility = View.VISIBLE
+        binding.fabSettings.setOnClickListener {
+            (activity as? MainActivity)?.showSettingsPopup(it)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentSong.collectLatest { song ->
+                if (song != null) {
+                    // Move up when mini player shows up
+                    binding.fabSettings.animate()
+                        .translationY(-400f)
+                        .alpha(1f)
+                        .setDuration(300)
+                        .start()
+                } else {
+                    // Move down when mini player is gone
+                    binding.fabSettings.animate()
+                        .translationY(0f)
+                        .alpha(1f)
+                        .setDuration(300)
+                        .start()
+                }
+            }
+        }
     }
 
 
@@ -46,6 +76,7 @@ class AudioBrowseFragment : Fragment() {
         mediaAdapter = MediaAdapter(
             showNumbers = false,
             onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
+            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) },
             onItemClick = { song ->
                 viewModel.playSong(song, mediaAdapter.currentList, "Library")
             }
@@ -82,7 +113,7 @@ class AudioBrowseFragment : Fragment() {
                 actionState: Int,
                 isCurrentlyActive: Boolean
             ) {
-                val revealWidth = -100f * recyclerView.context.resources.displayMetrics.density
+                val revealWidth = -120f * recyclerView.context.resources.displayMetrics.density
                 // Cap the swipe distance to reveal width if swiping left
                 val translationX = if (dX < revealWidth) revealWidth else dX
                 
@@ -125,27 +156,27 @@ class AudioBrowseFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.songs.collectLatest { songs ->
                 mediaAdapter.submitList(songs)
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.currentSong.collectLatest { song ->
-                song?.let { mediaAdapter.setPlayingItem(it.id) }
+                mediaAdapter.setPlayingItem(song?.id ?: -1)
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.favoriteIds.collectLatest { ids ->
                 mediaAdapter.setFavorites(ids)
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.isPlaying.collectLatest { isPlaying ->
                 mediaAdapter.setIsAnimating(isPlaying)
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             // Observe playlist name changes to update swipe rules in adapter
             viewModel.playlistName.collectLatest { name ->
                 mediaAdapter.setPlaylistName(name)

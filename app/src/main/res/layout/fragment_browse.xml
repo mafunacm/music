@@ -19,9 +19,21 @@
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"
         android:visibility="gone"
-        app:backgroundTint="@color/accent_teal"
+        app:backgroundTint="@color/highlight"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tint="@color/white" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_settings"
+        android:visibility="gone"
+        app:backgroundTint="@color/domant"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@null" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -15,7 +15,8 @@ class AudioRepository(private val context: Context) {
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID
         )
 
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
@@ -35,6 +36,7 @@ class AudioRepository(private val context: Context) {
             val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val albumColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val albumIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
 
             while (it.moveToNext()) {
                 val path = it.getString(pathColumn)
@@ -47,10 +49,11 @@ class AudioRepository(private val context: Context) {
                 val duration = it.getLong(durationColumn)
                 val artist = it.getString(artistColumn)
                 val album = it.getString(albumColumn)
+                val albumId = it.getLong(albumIdColumn)
                 val folderPath = File(path).parent ?: ""
 
                 songList.add(
-                    Song(id, title, path, duration, artist, album, folderPath)
+                    Song(id, title, path, duration, artist, album, folderPath, albumId)
                 )
             }
         }

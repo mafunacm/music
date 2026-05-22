@@ -12,13 +12,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ConcatAdapter
 import com.musicplayer.adapters.FolderAdapter
 import com.musicplayer.adapters.MediaAdapter
+import com.musicplayer.MainActivity
 import com.musicplayer.databinding.FragmentBrowseBinding
 import com.musicplayer.models.MediaType
 import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.media3.common.util.UnstableApi
 
+@UnstableApi
 class FolderBrowseFragment : Fragment() {
     private var _binding: FragmentBrowseBinding? = null
     private val binding get() = _binding!!
@@ -53,7 +56,8 @@ class FolderBrowseFragment : Fragment() {
 
         mediaAdapter = MediaAdapter(
             showNumbers = false,
-            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) }
+            onFavoriteClick = { song -> viewModel.toggleFavorite(song.id) },
+            onPlaylistClick = { song -> (activity as? MainActivity)?.showAddToPlaylistDialog(song) }
         ) { song ->
             val listToPlay = mediaAdapter.currentList
             val name = currentPath?.substringAfterLast(java.io.File.separator) ?: "Music"
@@ -69,19 +73,24 @@ class FolderBrowseFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.folders.collectLatest {
                 refreshUI()
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.currentSong.collectLatest { song ->
-                song?.let { mediaAdapter.setPlayingItem(it.id) }
+                mediaAdapter.setPlayingItem(song?.id ?: -1)
             }
         }
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.favoriteIds.collectLatest { ids ->
                 mediaAdapter.setFavorites(ids)
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isPlaying.collectLatest { isPlaying ->
+                mediaAdapter.setIsAnimating(isPlaying)
             }
         }
     }

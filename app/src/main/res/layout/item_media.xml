@@ -10,19 +10,35 @@
         android:id="@+id/swipeRevealLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/accent_teal"> <!-- Teal Background -->
+        android:background="@color/highlight"> <!-- Teal Background -->
 
-        <ImageView
-            android:id="@+id/ivSwipeFavorite"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginEnd="16dp"
-            android:padding="8dp"
-            android:src="@android:drawable/btn_star_big_on"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/white" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivSwipePlaylist"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_input_add"
+                app:tint="@color/white" />
+
+            <ImageView
+                android:id="@+id/ivSwipeFavorite"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="8dp"
+                android:src="@android:drawable/btn_star_big_on"
+                app:tint="@color/white" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -101,7 +117,7 @@
                 android:maxLines="1"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
-                tools:text="Artist • Album" />
+                tools:text="Artist â€¢ Album" />
 
         </LinearLayout>
 

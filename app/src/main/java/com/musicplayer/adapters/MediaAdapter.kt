@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 class MediaAdapter(
     private val showNumbers: Boolean = false,
     private val onFavoriteClick: ((Song) -> Unit)? = null,
+    private val onPlaylistClick: ((Song) -> Unit)? = null,
     private val onItemClick: (Song) -> Unit
 ) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>() {
 
@@ -147,15 +148,20 @@ class MediaAdapter(
             binding.swipeRevealLayout.visibility = if (canBeFavorite) View.VISIBLE else View.GONE
             binding.ivSwipeFavorite.visibility = if (isFavorite) View.GONE else View.VISIBLE
 
-            binding.swipeRevealLayout.setOnClickListener {
+            binding.ivSwipeFavorite.setOnClickListener {
                 if (!isFavorite) {
                     onFavoriteClick?.invoke(song)
                 }
                 setSwipedPosition(-1)
             }
 
+            binding.ivSwipePlaylist.setOnClickListener {
+                onPlaylistClick?.invoke(song)
+                setSwipedPosition(-1)
+            }
+
             // Apply translation if this item is swiped
-            val revealWidth = -100f * binding.root.context.resources.displayMetrics.density
+            val revealWidth = -120f * binding.root.context.resources.displayMetrics.density
             binding.rootView.translationX = if (swipedPosition == bindingAdapterPosition) revealWidth else 0f
         }
     }
