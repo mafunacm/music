@@ -35,15 +35,24 @@ class VideoBrowseFragment : Fragment() {
             setContent {
                 MusicPlayerTheme {
                     val videos by viewModel.videos.collectAsState()
+                    val favoriteIds by viewModel.favoriteIds.collectAsState()
                     
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(videos) { video ->
+                            val song = video.toSong()
                             TrackRow(
-                                song = video.toSong(),
+                                song = song,
                                 isActive = false,
                                 isPlaying = false,
+                                isFavorite = favoriteIds.contains(song.id),
                                 onSelect = {
                                     (activity as? MainActivity)?.playMediaItem(video, videos)
+                                },
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(song.id)
+                                },
+                                onAddToPlaylist = {
+                                    (activity as? MainActivity)?.showAddToPlaylistDialog(song)
                                 }
                             )
                         }

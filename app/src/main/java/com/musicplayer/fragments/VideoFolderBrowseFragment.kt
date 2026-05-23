@@ -61,6 +61,7 @@ class VideoFolderBrowseFragment : Fragment() {
         } else {
             emptyList()
         }
+        val favoriteIds by viewModel.favoriteIds.collectAsState()
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(subfolders) { folder ->
@@ -74,12 +75,19 @@ class VideoFolderBrowseFragment : Fragment() {
                     song = song,
                     isActive = false,
                     isPlaying = false,
+                    isFavorite = favoriteIds.contains(song.id),
                     onSelect = {
                         val videosInFolder = viewModel.videoFolders.value[currentPath] ?: emptyList()
                         val mediaItem = videosInFolder.find { it.id == song.id }
                         if (mediaItem != null) {
                             (activity as? MainActivity)?.playMediaItem(mediaItem, videosInFolder)
                         }
+                    },
+                    onFavoriteToggle = {
+                        viewModel.toggleFavorite(song.id)
+                    },
+                    onAddToPlaylist = {
+                        (activity as? MainActivity)?.showAddToPlaylistDialog(song)
                     }
                 )
             }

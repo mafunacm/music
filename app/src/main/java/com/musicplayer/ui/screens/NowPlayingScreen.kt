@@ -25,6 +25,9 @@ import com.musicplayer.ui.components.*
 import com.musicplayer.ui.theme.*
 import java.util.concurrent.TimeUnit
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingScreen(
@@ -53,6 +56,7 @@ fun NowPlayingScreen(
                 .padding(horizontal = 24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding()
+                .verticalScroll(rememberScrollState()) // Prevent chopping
         ) {
             // Top Bar
             Row(
@@ -82,10 +86,10 @@ fun NowPlayingScreen(
 
             // Album Art
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                AlbumArt(imageUrl = song?.path)
+                AlbumArt(imageUrl = song?.path, size = 200.dp)
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Track Info
             Row(
@@ -150,7 +154,7 @@ fun NowPlayingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Transport Controls
             Row(
@@ -165,10 +169,10 @@ fun NowPlayingScreen(
                     Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = PlayerInactive, modifier = Modifier.size(32.dp))
                 }
                 
-                // Reduced size from 64dp to 56dp
+                // Reduced size from 56dp to 52dp
                 Surface(
                     onClick = onPlayPause,
-                    modifier = Modifier.size(56.dp),
+                    modifier = Modifier.size(52.dp),
                     shape = CircleShape,
                     color = if (isPlaying) PlayerActive else PlayerInactive,
                     shadowElevation = 8.dp
@@ -178,7 +182,7 @@ fun NowPlayingScreen(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
                             tint = Color.Black,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }

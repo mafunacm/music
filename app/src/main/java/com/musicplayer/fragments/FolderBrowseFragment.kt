@@ -55,6 +55,7 @@ class FolderBrowseFragment : Fragment() {
     private fun FolderContent() {
         val currentSong by viewModel.currentSong.collectAsState()
         val isPlaying by viewModel.isPlaying.collectAsState()
+        val favoriteIds by viewModel.favoriteIds.collectAsState()
 
         val subfolders = viewModel.getFoldersForPath(currentPath, com.musicplayer.models.MediaType.AUDIO)
         val songs = if (currentPath != null) {
@@ -74,8 +75,15 @@ class FolderBrowseFragment : Fragment() {
                     song = song,
                     isActive = song.id == currentSong?.id,
                     isPlaying = isPlaying,
+                    isFavorite = favoriteIds.contains(song.id),
                     onSelect = {
                         viewModel.playSong(song, songs, currentPath?.substringAfterLast(File.separator) ?: "Music")
+                    },
+                    onFavoriteToggle = {
+                        viewModel.toggleFavorite(song.id)
+                    },
+                    onAddToPlaylist = {
+                        (activity as? com.musicplayer.MainActivity)?.showAddToPlaylistDialog(song)
                     }
                 )
             }

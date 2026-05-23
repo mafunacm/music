@@ -47,6 +47,7 @@ class AudioBrowseFragment : Fragment() {
                     val songs by viewModel.songs.collectAsState()
                     val currentSong by viewModel.currentSong.collectAsState()
                     val isPlaying by viewModel.isPlaying.collectAsState()
+                    val favoriteIds by viewModel.favoriteIds.collectAsState()
                     
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(songs) { song ->
@@ -54,8 +55,15 @@ class AudioBrowseFragment : Fragment() {
                                 song = song,
                                 isActive = song.id == currentSong?.id,
                                 isPlaying = isPlaying,
+                                isFavorite = favoriteIds.contains(song.id),
                                 onSelect = {
                                     viewModel.playSong(song, songs, "Library")
+                                },
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(song.id)
+                                },
+                                onAddToPlaylist = {
+                                    (activity as? MainActivity)?.showAddToPlaylistDialog(song)
                                 }
                             )
                         }

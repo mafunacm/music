@@ -10,9 +10,13 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,11 +40,14 @@ fun TrackRow(
     song: Song,
     isActive: Boolean,
     isPlaying: Boolean,
+    isFavorite: Boolean,
     onSelect: () -> Unit,
+    onFavoriteToggle: () -> Unit,
+    onAddToPlaylist: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val revealWidthPx = with(density) { 80.dp.toPx() }
+    val revealWidthPx = with(density) { 120.dp.toPx() } // Wider for 2 icons
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
@@ -49,27 +56,33 @@ fun TrackRow(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0D0D0D)) // Base background
+            .background(PlayerInactive.copy(alpha = 0.2f)) // Highlight color background on swipe
     ) {
-        // Revealed Menu (Background Layer)
-        Box(
+        // Revealed Menu (Favorite and Add icons)
+        Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(80.dp)
-                .fillMaxHeight()
-                .background(PlayerActive.copy(alpha = 0.12f))
-                .clickable {
-                    scope.launch { offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessLow)) }
-                    // Trigger "More" action here if needed
-                },
-            contentAlignment = Alignment.Center
+                .width(120.dp)
+                .fillMaxHeight(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text(
-                text = "More",
-                color = PlayerActive,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
+            IconButton(onClick = {
+                onFavoriteToggle()
+                scope.launch { offsetX.animateTo(0f) }
+            }) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) PlayerActive else Color.White
+                )
+            }
+            IconButton(onClick = {
+                onAddToPlaylist()
+                scope.launch { offsetX.animateTo(0f) }
+            }) {
+                Icon(Icons.Default.Add, contentDescription = "Add to Playlist", tint = Color.White)
+            }
         }
 
         // Foreground Content
@@ -114,13 +127,6 @@ fun TrackRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    Icons.Default.ChevronLeft,
-                    contentDescription = null,
-                    tint = PlayerDormant.copy(alpha = 0.35f),
-                    modifier = Modifier.size(13.dp)
-                )
-
                 // Thumb
                 Box(
                     modifier = Modifier
@@ -131,7 +137,9 @@ fun TrackRow(
                                 Brush.linearGradient(
                                     listOf(PlayerActive.copy(alpha = 0.18f), AccentPurple.copy(alpha = 0.28f))
                                 )
-                            } else Brush.linearGradient(listOf(Color(0xFF1C1C1C), Color(0xFF1C1C1C)))
+                            } else {
+                                Brush.linearGradient(listOf(Color(0xFF1C1C1C), Color(0xFF1C1C1C)))
+                            }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -162,6 +170,14 @@ fun TrackRow(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+
+                // Caret moved to the right and made highlight color
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = PlayerInactive,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

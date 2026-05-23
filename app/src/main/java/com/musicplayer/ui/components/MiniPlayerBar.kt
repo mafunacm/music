@@ -113,32 +113,38 @@ fun MiniPlayerBar(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Track Info + Duration
+                // Row 2: Track Info + Duration
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(20.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.size(22.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = PlayerInactive.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(11.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(12.dp))
                         }
                     }
                     
-                    Text(
-                        text = song?.title ?: "Not Playing",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .weight(1f)
-                            .basicMarquee(iterations = Int.MAX_VALUE)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = song?.title ?: "Not Playing",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                        )
+                        Text(
+                            text = song?.artist ?: "Unknown Artist",
+                            color = PlayerSubtext,
+                            fontSize = 10.sp,
+                            maxLines = 1
+                        )
+                    }
 
                     // Added duration to mini player
                     Text(
