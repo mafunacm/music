@@ -1,6 +1,8 @@
 package com.musicplayer.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,13 +21,17 @@ import androidx.compose.ui.unit.sp
 import com.musicplayer.models.Song
 import com.musicplayer.ui.components.*
 import com.musicplayer.ui.theme.*
+import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingScreen(
     song: Song?,
     isPlaying: Boolean,
     isShuffle: Boolean,
     isRepeat: Boolean,
+    currentTime: Long,
+    totalDuration: Long,
     onClose: () -> Unit,
     onPlayPause: () -> Unit,
     onShuffle: () -> Unit,
@@ -33,6 +39,7 @@ fun NowPlayingScreen(
     onPrev: () -> Unit,
     onNext: () -> Unit,
     onFavoriteToggle: () -> Unit,
+    onSeek: (Long) -> Unit,
     isFavorite: Boolean
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -78,7 +85,7 @@ fun NowPlayingScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Track Info
+            // Track Info - Scrolling Title
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,7 +97,8 @@ fun NowPlayingScreen(
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
                     )
                     Text(
                         text = song?.artist ?: "Unknown Artist",
@@ -110,24 +118,24 @@ fun NowPlayingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Progress Bar
+            // Progress Bar with Real Data
             Column(modifier = Modifier.fillMaxWidth()) {
                 Slider(
-                    value = 0.3f,
-                    onValueChange = {},
+                    value = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f,
+                    onValueChange = { onSeek((it * totalDuration).toLong()) },
                     colors = SliderDefaults.colors(
                         thumbColor = PlayerActive,
                         activeTrackColor = PlayerActive,
                         inactiveTrackColor = Color.White.copy(alpha = 0.15f)
                     )
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("1:32", color = PlayerSubtext, fontSize = 12.sp)
-                    Text("58:00", color = PlayerSubtext, fontSize = 12.sp)
-                }
+                // Exactly as it was in the old code: 00:00 / 00:00
+                Text(
+                    text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
+                    color = PlayerSubtext,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.End)
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -239,4 +247,11 @@ fun NowPlayingScreen(
             Spacer(modifier = Modifier.weight(1f))
         }
     }
+}
+
+private fun formatDuration(ms: Long): String {
+    if (ms < 0) return "00:00"
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(ms)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(ms) % 60
+    return String.format("%02d:%02d", minutes, seconds)
 }

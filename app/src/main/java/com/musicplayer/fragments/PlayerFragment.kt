@@ -50,7 +50,23 @@ class PlayerFragment : Fragment() {
         val repeatMode by viewModel.repeatMode.collectAsState()
         val isFavorite = song?.let { viewModel.isFavorite(it.id) } ?: false
 
+        var currentTime by remember { mutableLongStateOf(0L) }
+        var totalDuration by remember { mutableLongStateOf(0L) }
         var slideOffset by remember { mutableFloatStateOf(0f) }
+
+        // Update playback time
+        LaunchedEffect(isPlaying, song) {
+            if (isPlaying && song != null) {
+                while (true) {
+                    currentTime = viewModel.getCurrentPosition().coerceAtLeast(0L)
+                    totalDuration = viewModel.getDuration().coerceAtLeast(0L)
+                    kotlinx.coroutines.delay(1000)
+                }
+            } else {
+                currentTime = viewModel.getCurrentPosition().coerceAtLeast(0L)
+                totalDuration = viewModel.getDuration().coerceAtLeast(0L)
+            }
+        }
 
         LaunchedEffect(Unit) {
             val activity = activity as? MainActivity ?: return@LaunchedEffect
@@ -77,6 +93,8 @@ class PlayerFragment : Fragment() {
                     isPlaying = isPlaying,
                     isShuffle = isShuffle,
                     isRepeat = repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF,
+                    currentTime = currentTime,
+                    totalDuration = totalDuration,
                     onClose = { (activity as? MainActivity)?.let { BottomSheetBehavior.from(it.findViewById<View>(R.id.playerBottomSheet)).state = BottomSheetBehavior.STATE_COLLAPSED } },
                     onPlayPause = { viewModel.togglePlayPause() },
                     onShuffle = { viewModel.toggleShuffle() },
@@ -84,6 +102,7 @@ class PlayerFragment : Fragment() {
                     onPrev = { viewModel.playPrevious() },
                     onNext = { viewModel.playNext() },
                     onFavoriteToggle = { song?.let { viewModel.toggleFavorite(it.id) } },
+                    onSeek = { viewModel.seekTo(it) },
                     isFavorite = isFavorite
                 )
             }
@@ -100,6 +119,7 @@ class PlayerFragment : Fragment() {
                         isPlaying = isPlaying,
                         isShuffle = isShuffle,
                         isRepeat = repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF,
+                        progress = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f,
                         onPlayPause = { viewModel.togglePlayPause() },
                         onPrev = { viewModel.playPrevious() },
                         onNext = { viewModel.playNext() },

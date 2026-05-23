@@ -1,6 +1,8 @@
 package com.musicplayer.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -21,12 +23,14 @@ import androidx.compose.ui.unit.sp
 import com.musicplayer.models.Song
 import com.musicplayer.ui.theme.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MiniPlayerBar(
     song: Song?,
     isPlaying: Boolean,
     isShuffle: Boolean,
     isRepeat: Boolean,
+    progress: Float,
     onPlayPause: () -> Unit,
     onPrev: () -> Unit,
     onNext: () -> Unit,
@@ -38,29 +42,29 @@ fun MiniPlayerBar(
     Box(
         modifier = modifier
             .padding(horizontal = 12.dp)
-            .padding(top = 16.dp, bottom = 16.dp)
+            .padding(top = 8.dp, bottom = 16.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xF914141C))
             .clickable { onOpen() }
     ) {
         Column {
-            // Progress Strip
+            // Progress Strip at the very top edge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(2.dp)
+                    .height(3.dp)
                     .background(Color.White.copy(alpha = 0.07f))
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.14f)
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .background(Brush.horizontalGradient(listOf(PlayerInactive, PlayerActive)))
                 )
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Controls
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                // Row 1: Controls
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,31 +105,41 @@ fun MiniPlayerBar(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Track Info
+                // Row 2: Track Info (Scrolling Title) below controls
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(20.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.size(22.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = PlayerInactive.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(11.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(12.dp))
                         }
                     }
+                    
                     Text(
                         text = song?.title ?: "Not Playing",
                         color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f)
-                        // TODO: Add basicMarquee here if available
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .weight(1f)
+                            .basicMarquee(iterations = Int.MAX_VALUE)
                     )
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = PlayerDormant, modifier = Modifier.size(14.dp))
+                    
+                    Icon(
+                        Icons.Default.KeyboardArrowDown, 
+                        contentDescription = null, 
+                        tint = PlayerDormant, 
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }
