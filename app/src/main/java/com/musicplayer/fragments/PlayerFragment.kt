@@ -111,7 +111,7 @@ class PlayerFragment : Fragment() {
             if (slideOffset < 1f) {
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(140.dp)
                     .graphicsLayer { alpha = 1f - slideOffset }
                 ) {
                     MiniPlayerBar(
@@ -120,6 +120,8 @@ class PlayerFragment : Fragment() {
                         isShuffle = isShuffle,
                         isRepeat = repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF,
                         progress = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f,
+                        currentTime = currentTime,
+                        totalDuration = totalDuration,
                         onPlayPause = { viewModel.togglePlayPause() },
                         onPrev = { viewModel.playPrevious() },
                         onNext = { viewModel.playNext() },

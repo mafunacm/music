@@ -73,8 +73,8 @@ class MainActivity : AppCompatActivity() {
             // Calculate the Peek Height including the Navigation Bar
             val density = resources.displayMetrics.density
             val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-            // 120dp for the mini player + system nav bar height
-            behavior.peekHeight = (120 * density).toInt() + systemBars.bottom
+            // 140dp for the mini player + system nav bar height
+            behavior.peekHeight = (140 * density).toInt() + systemBars.bottom
 
             insets
         }

@@ -3,6 +3,7 @@ package com.musicplayer.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -85,7 +87,7 @@ fun NowPlayingScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Track Info - Scrolling Title
+            // Track Info
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -118,18 +120,28 @@ fun NowPlayingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Progress Bar with Real Data
+            // Progress Strip style for consistency
             Column(modifier = Modifier.fillMaxWidth()) {
-                Slider(
-                    value = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f,
-                    onValueChange = { onSeek((it * totalDuration).toLong()) },
-                    colors = SliderDefaults.colors(
-                        thumbColor = PlayerActive,
-                        activeTrackColor = PlayerActive,
-                        inactiveTrackColor = Color.White.copy(alpha = 0.15f)
+                val progress = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color.White.copy(alpha = 0.15f))
+                        .clickable { /* TODO: Implement touch-to-seek on the strip */ }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
+                            .fillMaxHeight()
+                            .background(Brush.horizontalGradient(listOf(PlayerInactive, PlayerActive)))
                     )
-                )
-                // Exactly as it was in the old code: 00:00 / 00:00
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
                 Text(
                     text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
                     color = PlayerSubtext,
@@ -153,9 +165,10 @@ fun NowPlayingScreen(
                     Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = PlayerInactive, modifier = Modifier.size(32.dp))
                 }
                 
+                // Reduced size from 64dp to 56dp
                 Surface(
                     onClick = onPlayPause,
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier.size(56.dp),
                     shape = CircleShape,
                     color = if (isPlaying) PlayerActive else PlayerInactive,
                     shadowElevation = 8.dp
@@ -165,7 +178,7 @@ fun NowPlayingScreen(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
                             tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }

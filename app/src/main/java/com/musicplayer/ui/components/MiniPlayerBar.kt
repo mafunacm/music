@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.musicplayer.models.Song
 import com.musicplayer.ui.theme.*
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -31,6 +32,8 @@ fun MiniPlayerBar(
     isShuffle: Boolean,
     isRepeat: Boolean,
     progress: Float,
+    currentTime: Long,
+    totalDuration: Long,
     onPlayPause: () -> Unit,
     onPrev: () -> Unit,
     onNext: () -> Unit,
@@ -42,13 +45,13 @@ fun MiniPlayerBar(
     Box(
         modifier = modifier
             .padding(horizontal = 12.dp)
-            .padding(top = 8.dp, bottom = 16.dp)
+            .padding(top = 8.dp, bottom = 12.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xF914141C))
             .clickable { onOpen() }
     ) {
         Column {
-            // Progress Strip at the very top edge
+            // Progress Strip
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,8 +66,8 @@ fun MiniPlayerBar(
                 )
             }
 
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                // Row 1: Controls
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                // Controls
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,9 +79,11 @@ fun MiniPlayerBar(
                     IconButton(onClick = onPrev, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.Default.SkipPrevious, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(20.dp))
                     }
+                    
+                    // Reduced size from 48dp to 42dp
                     Surface(
                         onClick = onPlayPause,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(42.dp),
                         shape = CircleShape,
                         color = if (isPlaying) PlayerActive else PlayerInactive,
                         shadowElevation = 4.dp
@@ -88,10 +93,11 @@ fun MiniPlayerBar(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = null,
                                 tint = Color.Black,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
+                    
                     IconButton(onClick = onNext, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.Default.SkipNext, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(20.dp))
                     }
@@ -105,43 +111,58 @@ fun MiniPlayerBar(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Row 2: Track Info (Scrolling Title) below controls
+                // Track Info + Duration
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(22.dp),
-                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.size(20.dp),
+                        shape = RoundedCornerShape(4.dp),
                         color = PlayerInactive.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(12.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(11.dp))
                         }
                     }
                     
                     Text(
                         text = song?.title ?: "Not Playing",
                         color = Color.White,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         modifier = Modifier
                             .weight(1f)
                             .basicMarquee(iterations = Int.MAX_VALUE)
                     )
+
+                    // Added duration to mini player
+                    Text(
+                        text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
+                        color = PlayerSubtext,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                     
                     Icon(
                         Icons.Default.KeyboardArrowDown, 
                         contentDescription = null, 
                         tint = PlayerDormant, 
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }
         }
     }
+}
+
+private fun formatDuration(ms: Long): String {
+    if (ms < 0) return "00:00"
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(ms)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(ms) % 60
+    return String.format("%02d:%02d", minutes, seconds)
 }
