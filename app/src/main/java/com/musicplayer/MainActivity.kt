@@ -67,14 +67,18 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             
-            // Apply top padding to the main content container to avoid status bar overlap
+            // Apply top padding to avoid status bar overlap
             binding.mainContentContainer.updatePadding(top = systemBars.top)
 
             // Calculate the Peek Height including the Navigation Bar
             val density = resources.displayMetrics.density
             val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-            // 140dp for the mini player + system nav bar height
-            behavior.peekHeight = (140 * density).toInt() + systemBars.bottom
+            val peekHeightPx = (140 * density).toInt() + systemBars.bottom
+            behavior.peekHeight = peekHeightPx
+
+            // Apply bottom padding to the list container so items don't go under the player
+            binding.viewPager.updatePadding(bottom = peekHeightPx)
+            binding.viewPager.clipToPadding = true
 
             insets
         }

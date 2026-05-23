@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.musicplayer.models.Song
 import com.musicplayer.ui.theme.*
 import java.util.concurrent.TimeUnit
+import androidx.media3.common.Player
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -30,7 +31,7 @@ fun MiniPlayerBar(
     song: Song?,
     isPlaying: Boolean,
     isShuffle: Boolean,
-    isRepeat: Boolean,
+    repeatMode: Int,
     progress: Float,
     currentTime: Long,
     totalDuration: Long,
@@ -42,6 +43,8 @@ fun MiniPlayerBar(
     onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isLoopOne = repeatMode == Player.REPEAT_MODE_ONE
+
     Box(
         modifier = modifier
             .padding(horizontal = 12.dp)
@@ -73,17 +76,34 @@ fun MiniPlayerBar(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onShuffle, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Shuffle, contentDescription = null, tint = if (isShuffle) PlayerActive else PlayerInactive, modifier = Modifier.size(17.dp))
+                    IconButton(
+                        onClick = onShuffle, 
+                        modifier = Modifier.size(36.dp),
+                        enabled = !isLoopOne
+                    ) {
+                        Icon(
+                            Icons.Default.Shuffle, 
+                            contentDescription = null, 
+                            tint = if (isLoopOne) PlayerDormant else if (isShuffle) PlayerActive else PlayerInactive, 
+                            modifier = Modifier.size(17.dp)
+                        )
                     }
-                    IconButton(onClick = onPrev, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.SkipPrevious, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(20.dp))
+                    IconButton(
+                        onClick = onPrev, 
+                        modifier = Modifier.size(36.dp),
+                        enabled = !isLoopOne
+                    ) {
+                        Icon(
+                            Icons.Default.SkipPrevious, 
+                            contentDescription = null, 
+                            tint = if (isLoopOne) PlayerDormant else PlayerInactive, 
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     
-                    // Reduced size from 48dp to 42dp
                     Surface(
                         onClick = onPlayPause,
-                        modifier = Modifier.size(42.dp),
+                        modifier = Modifier.size(40.dp),
                         shape = CircleShape,
                         color = if (isPlaying) PlayerActive else PlayerInactive,
                         shadowElevation = 4.dp
@@ -98,14 +118,28 @@ fun MiniPlayerBar(
                         }
                     }
                     
-                    IconButton(onClick = onNext, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.SkipNext, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(20.dp))
+                    IconButton(
+                        onClick = onNext, 
+                        modifier = Modifier.size(36.dp),
+                        enabled = !isLoopOne
+                    ) {
+                        Icon(
+                            Icons.Default.SkipNext, 
+                            contentDescription = null, 
+                            tint = if (isLoopOne) PlayerDormant else PlayerInactive, 
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     IconButton(onClick = onRepeat, modifier = Modifier.size(36.dp)) {
+                        val repeatIcon = when (repeatMode) {
+                            Player.REPEAT_MODE_ONE -> Icons.Default.RepeatOne
+                            else -> Icons.Default.Repeat
+                        }
+                        val repeatColor = if (repeatMode == Player.REPEAT_MODE_OFF) PlayerInactive else PlayerActive
                         Icon(
-                            imageVector = if (isRepeat) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                            imageVector = repeatIcon,
                             contentDescription = null,
-                            tint = if (isRepeat) PlayerActive else PlayerInactive,
+                            tint = repeatColor,
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -113,19 +147,19 @@ fun MiniPlayerBar(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Row 2: Track Info + Duration
+                // Track Info + Duration
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(22.dp),
-                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.size(20.dp),
+                        shape = RoundedCornerShape(4.dp),
                         color = PlayerInactive.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(12.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(11.dp))
                         }
                     }
                     
@@ -146,7 +180,7 @@ fun MiniPlayerBar(
                         )
                     }
 
-                    // Added duration to mini player
+                    // Duration display
                     Text(
                         text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
                         color = PlayerSubtext,

@@ -21,6 +21,7 @@ import android.widget.Toast
 
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.media3.common.util.UnstableApi
 
 @UnstableApi
@@ -36,11 +37,19 @@ class PlaylistActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             
-            // Push player up above nav bar
-            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(binding.playerBottomSheet)
-            behavior.peekHeight = (80 * resources.displayMetrics.density).toInt() + systemBars.bottom
+            // Apply top padding to the whole root to avoid status bar overlap
+            binding.root.updatePadding(top = systemBars.top)
+            
+            // Calculate the Peek Height including the Navigation Bar
+            val density = resources.displayMetrics.density
+            val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
+            val peekHeightPx = (140 * density).toInt() + systemBars.bottom
+            behavior.peekHeight = peekHeightPx
+
+            // Push the list content up so it's not behind the mini player/nav bar
+            binding.recyclerView.updatePadding(bottom = peekHeightPx)
+            binding.recyclerView.clipToPadding = true
 
             insets
         }

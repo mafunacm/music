@@ -3,6 +3,7 @@ package com.musicplayer.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -24,17 +25,18 @@ import com.musicplayer.models.Song
 import com.musicplayer.ui.components.*
 import com.musicplayer.ui.theme.*
 import java.util.concurrent.TimeUnit
+import androidx.media3.common.Player
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NowPlayingScreen(
     song: Song?,
     isPlaying: Boolean,
     isShuffle: Boolean,
-    isRepeat: Boolean,
+    repeatMode: Int,
     currentTime: Long,
     totalDuration: Long,
     onClose: () -> Unit,
@@ -47,6 +49,8 @@ fun NowPlayingScreen(
     onSeek: (Long) -> Unit,
     isFavorite: Boolean
 ) {
+    val isLoopOne = repeatMode == Player.REPEAT_MODE_ONE
+
     Box(modifier = Modifier.fillMaxSize()) {
         WaveBackground()
 
@@ -86,7 +90,7 @@ fun NowPlayingScreen(
 
             // Album Art
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                AlbumArt(imageUrl = song?.path, size = 200.dp)
+                AlbumArt(imageUrl = song?.path, size = 180.dp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -124,27 +128,50 @@ fun NowPlayingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Progress Strip style for consistency
+            // Seekable Progress Bar (Slider styled as a strip)
             Column(modifier = Modifier.fillMaxWidth()) {
                 val progress = if (totalDuration > 0) currentTime.toFloat() / totalDuration else 0f
+                var sliderValue by remember(progress) { mutableFloatStateOf(progress) }
+
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    onValueChangeFinished = {
+                        onSeek((sliderValue * totalDuration).toLong())
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = PlayerActive,
+                        activeTrackColor = Color.Transparent, 
+                        inactiveTrackColor = Color.Transparent
+                    ),
+                    track = { sliderState ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(sliderState.value.coerceIn(0f, 1f))
+                                    .fillMaxHeight()
+                                    .background(Brush.horizontalGradient(listOf(PlayerInactive, PlayerActive)))
+                            )
+                        }
+                    },
+                    thumb = {
+                        Spacer(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(PlayerActive, CircleShape)
+                                .border(2.dp, Color.Black, CircleShape)
+                        )
+                    }
+                )
                 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(Color.White.copy(alpha = 0.15f))
-                        .clickable { /* TODO: Implement touch-to-seek on the strip */ }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(progress.coerceIn(0f, 1f))
-                            .fillMaxHeight()
-                            .background(Brush.horizontalGradient(listOf(PlayerInactive, PlayerActive)))
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
                     text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
@@ -154,7 +181,7 @@ fun NowPlayingScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Transport Controls
             Row(
@@ -162,14 +189,28 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onShuffle) {
-                    Icon(Icons.Default.Shuffle, contentDescription = "Shuffle", tint = if (isShuffle) PlayerActive else PlayerInactive)
+                IconButton(
+                    onClick = onShuffle,
+                    enabled = !isLoopOne
+                ) {
+                    Icon(
+                        Icons.Default.Shuffle, 
+                        contentDescription = "Shuffle", 
+                        tint = if (isLoopOne) PlayerDormant else if (isShuffle) PlayerActive else PlayerInactive
+                    )
                 }
-                IconButton(onClick = onPrev) {
-                    Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = PlayerInactive, modifier = Modifier.size(32.dp))
+                IconButton(
+                    onClick = onPrev,
+                    enabled = !isLoopOne
+                ) {
+                    Icon(
+                        Icons.Default.SkipPrevious, 
+                        contentDescription = "Prev", 
+                        tint = if (isLoopOne) PlayerDormant else PlayerInactive, 
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
                 
-                // Reduced size from 56dp to 52dp
                 Surface(
                     onClick = onPlayPause,
                     modifier = Modifier.size(52.dp),
@@ -187,14 +228,27 @@ fun NowPlayingScreen(
                     }
                 }
 
-                IconButton(onClick = onNext) {
-                    Icon(Icons.Default.SkipNext, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(32.dp))
+                IconButton(
+                    onClick = onNext,
+                    enabled = !isLoopOne
+                ) {
+                    Icon(
+                        Icons.Default.SkipNext, 
+                        contentDescription = null, 
+                        tint = if (isLoopOne) PlayerDormant else PlayerInactive, 
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
                 IconButton(onClick = onRepeat) {
+                    val repeatIcon = when (repeatMode) {
+                        Player.REPEAT_MODE_ONE -> Icons.Default.RepeatOne
+                        else -> Icons.Default.Repeat
+                    }
+                    val repeatColor = if (repeatMode == Player.REPEAT_MODE_OFF) PlayerInactive else PlayerActive
                     Icon(
-                        imageVector = if (isRepeat) Icons.Default.RepeatOne else Icons.Default.Repeat,
+                        imageVector = repeatIcon,
                         contentDescription = "Repeat",
-                        tint = if (isRepeat) PlayerActive else PlayerInactive
+                        tint = repeatColor
                     )
                 }
             }
@@ -247,7 +301,7 @@ fun NowPlayingScreen(
             // Buy More
             Button(
                 onClick = { /* Buy */ },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PlayerActive.copy(alpha = 0.1f),
@@ -261,7 +315,7 @@ fun NowPlayingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

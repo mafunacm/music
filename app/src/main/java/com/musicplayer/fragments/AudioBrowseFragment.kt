@@ -6,28 +6,28 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.musicplayer.R
 import com.musicplayer.MainActivity
-import com.musicplayer.adapters.MediaAdapter
-import com.musicplayer.databinding.FragmentBrowseBinding
 import com.musicplayer.ui.MainViewModel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import androidx.media3.common.util.UnstableApi
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import com.musicplayer.ui.components.TrackRow
-import com.musicplayer.ui.theme.MusicPlayerTheme
-import androidx.compose.foundation.layout.fillMaxSize
+import com.musicplayer.ui.theme.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @UnstableApi
 class AudioBrowseFragment : Fragment() {
@@ -49,35 +49,62 @@ class AudioBrowseFragment : Fragment() {
                     val isPlaying by viewModel.isPlaying.collectAsState()
                     val favoriteIds by viewModel.favoriteIds.collectAsState()
                     
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(songs) { song ->
-                            TrackRow(
-                                song = song,
-                                isActive = song.id == currentSong?.id,
-                                isPlaying = isPlaying,
-                                isFavorite = favoriteIds.contains(song.id),
-                                onSelect = {
-                                    viewModel.playSong(song, songs, "Library")
-                                },
-                                onFavoriteToggle = {
-                                    viewModel.toggleFavorite(song.id)
-                                },
-                                onAddToPlaylist = {
-                                    (activity as? MainActivity)?.showAddToPlaylistDialog(song)
+                    var selectedSort by remember { mutableStateOf("All") }
+                    val sortOptions = listOf("All", "Artist", "Album", "Genre")
+
+                    Column(modifier = Modifier.fillMaxSize().background(PlayerBg)) {
+                        // Breadcrumbs / Sort Options
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(sortOptions) { option ->
+                                val isSelected = selectedSort == option
+                                Surface(
+                                    onClick = { selectedSort = option },
+                                    shape = RoundedCornerShape(50),
+                                    color = if (isSelected) PlayerActive.copy(alpha = 0.15f) else Color.Transparent,
+                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, PlayerActive) else null
+                                ) {
+                                    Text(
+                                        text = option,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                        color = if (isSelected) PlayerActive else PlayerDormant,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
-                            )
+                            }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(songs) { song ->
+                                TrackRow(
+                                    song = song,
+                                    isActive = song.id == currentSong?.id,
+                                    isPlaying = isPlaying,
+                                    isFavorite = favoriteIds.contains(song.id),
+                                    onSelect = {
+                                        viewModel.playSong(song, songs, "Library")
+                                    },
+                                    onFavoriteToggle = {
+                                        viewModel.toggleFavorite(song.id)
+                                    },
+                                    onAddToPlaylist = {
+                                        (activity as? MainActivity)?.showAddToPlaylistDialog(song)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        // XML/Fab logic removed/to be updated
-    }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

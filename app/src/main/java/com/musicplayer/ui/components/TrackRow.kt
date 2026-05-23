@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
@@ -47,7 +47,7 @@ fun TrackRow(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val revealWidthPx = with(density) { 120.dp.toPx() } // Wider for 2 icons
+    val revealWidthPx = with(density) { 120.dp.toPx() }
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
@@ -58,7 +58,7 @@ fun TrackRow(
             .clip(RoundedCornerShape(16.dp))
             .background(PlayerInactive.copy(alpha = 0.2f)) // Highlight color background on swipe
     ) {
-        // Revealed Menu (Favorite and Add icons)
+        // Revealed Menu (Favorite and Add icons) - Background layer
         Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -74,18 +74,22 @@ fun TrackRow(
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = if (isFavorite) PlayerActive else Color.White
+                    tint = PlayerInactive
                 )
             }
             IconButton(onClick = {
                 onAddToPlaylist()
                 scope.launch { offsetX.animateTo(0f) }
             }) {
-                Icon(Icons.Default.Add, contentDescription = "Add to Playlist", tint = Color.White)
+                Icon(
+                    imageVector = Icons.Default.Add, 
+                    contentDescription = "Add to Playlist", 
+                    tint = PlayerInactive
+                )
             }
         }
 
-        // Foreground Content
+        // Foreground Content - This must be OPAQUE to cover background icons
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
@@ -107,7 +111,7 @@ fun TrackRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(
-                    if (isActive) PlayerActive.copy(alpha = 0.07f) else Color(0xFF121212)
+                    if (isActive) Color(0xFF1E1E1E) else Color(0xFF121212) // Fully opaque
                 )
                 .border(
                     width = 1.dp,
@@ -171,9 +175,9 @@ fun TrackRow(
                     )
                 }
 
-                // Caret moved to the right and made highlight color
+                // Reversed caret (<) in highlight color
                 Icon(
-                    Icons.Default.ChevronRight,
+                    Icons.Default.ChevronLeft,
                     contentDescription = null,
                     tint = PlayerInactive,
                     modifier = Modifier.size(16.dp)

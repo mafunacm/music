@@ -165,13 +165,24 @@ class PlayerManager private constructor(private val context: Context) {
     fun getMediaSession(): MediaSession? = mediaSession
 
     fun playNext() {
+        if (player.repeatMode == Player.REPEAT_MODE_ONE) {
+            player.seekTo(0)
+            return
+        }
         if (player.hasNextMediaItem()) {
             player.seekToNext()
+            player.play()
+        } else if (player.repeatMode == Player.REPEAT_MODE_ALL) {
+            player.seekTo(0, 0)
             player.play()
         }
     }
 
     fun playPrevious() {
+        if (player.repeatMode == Player.REPEAT_MODE_ONE) {
+            player.seekTo(0)
+            return
+        }
         if (player.hasPreviousMediaItem()) {
             player.seekToPrevious()
             player.play()
@@ -182,6 +193,9 @@ class PlayerManager private constructor(private val context: Context) {
         if (player.isPlaying) {
             player.pause()
         } else {
+            if (player.playbackState == Player.STATE_ENDED) {
+                player.seekTo(0, 0)
+            }
             player.play()
         }
     }
@@ -191,7 +205,9 @@ class PlayerManager private constructor(private val context: Context) {
     }
 
     fun toggleShuffle() {
-        player.shuffleModeEnabled = !player.shuffleModeEnabled
+        if (player.repeatMode != Player.REPEAT_MODE_ONE) {
+            player.shuffleModeEnabled = !player.shuffleModeEnabled
+        }
     }
 
     fun toggleRepeatMode() {
@@ -200,6 +216,7 @@ class PlayerManager private constructor(private val context: Context) {
             Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
             else -> Player.REPEAT_MODE_OFF
         }
+        Log.d("PlayerManager", "Repeat mode toggled to: ${player.repeatMode}")
     }
 
     fun seekForward() {
