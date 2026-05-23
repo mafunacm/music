@@ -18,10 +18,10 @@ fun SpectrumBars(color: Color, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(1.dp),
         verticalAlignment = Alignment.Bottom
     ) {
-        Bar(color, 600, 0.3f, 0.95f)
-        Bar(color, 450, 0.75f, 0.2f)
-        Bar(color, 750, 0.5f, 1.0f)
-        Bar(color, 550, 0.85f, 0.15f)
+        Bar(color, 450, 0.3f, 0.95f)
+        Bar(color, 350, 0.75f, 0.2f)
+        Bar(color, 550, 0.5f, 1.0f)
+        Bar(color, 400, 0.85f, 0.15f)
     }
 }
 

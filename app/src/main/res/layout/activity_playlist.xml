@@ -5,19 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="false">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/transparent"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="false">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fitsSystemWindows="true"
+            android:fitsSystemWindows="false"
             app:titleEnabled="false"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
@@ -59,24 +59,17 @@
                     android:orientation="horizontal"
                     app:layout_constraintTop_toBottomOf="@+id/tvPlaylistMetadata">
 
-                    <ImageButton
-                        android:id="@+id/btnShuffleHeader"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Shuffle"
-                        android:src="@drawable/ic_shuffle"
-                        app:tint="@color/highlight" />
-
-                    <ImageButton
-                        android:id="@+id/btnRepeatHeader"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Repeat"
-                        android:src="@drawable/ic_repeat"
-                        app:tint="@color/highlight" />
+                    <Button
+                        android:id="@+id/btnPlayAllHeader"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Play All"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:icon="@android:drawable/ic_media_play"
+                        app:iconTint="@color/white" />
 
                     <View
                         android:layout_width="0dp"
@@ -84,43 +77,13 @@
                         android:layout_weight="1" />
 
                     <ImageButton
-                        android:id="@+id/btnPrevHeader"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Previous"
-                        android:src="@android:drawable/ic_media_previous"
-                        app:tint="@color/highlight" />
-
-                    <ImageButton
-                        android:id="@+id/btnPlayAllHeader"
+                        android:id="@+id/btnAddSongsHeader"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:layout_marginHorizontal="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Play All"
-                        android:src="@android:drawable/ic_media_play"
-                        app:tint="@color/highlight" />
-
-                    <ImageButton
-                        android:id="@+id/btnNextHeader"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Next"
-                        android:src="@android:drawable/ic_media_next"
-                        app:tint="@color/highlight" />
-
-                    <ImageButton
-                        android:id="@+id/btnAddSongsHeader"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="Add Songs"
                         android:src="@android:drawable/ic_input_add"
-                        app:tint="@color/highlight"
-                        android:visibility="gone" />
+                        app:tint="@color/highlight" />
 
                 </LinearLayout>
 
@@ -132,15 +95,14 @@
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
                 app:navigationIcon="@android:drawable/ic_menu_revert"
-                app:title=""
-                app:titleTextColor="@color/white" />
+                app:title="" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/composeView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
@@ -149,9 +111,8 @@
         android:id="@+id/playerBottomSheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginHorizontal="8dp"
         app:behavior_hideable="false"
-        app:behavior_peekHeight="80dp"
+        app:behavior_peekHeight="140dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <androidx.fragment.app.FragmentContainerView

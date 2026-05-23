@@ -315,7 +315,10 @@ fun NowPlayingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Extra bottom space to ensure scrollability past system bars
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }

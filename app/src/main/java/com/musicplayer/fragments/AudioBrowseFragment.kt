@@ -66,12 +66,12 @@ class AudioBrowseFragment : Fragment() {
                                     onClick = { selectedSort = option },
                                     shape = RoundedCornerShape(50),
                                     color = if (isSelected) PlayerActive.copy(alpha = 0.15f) else Color.Transparent,
-                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, PlayerActive) else null
+                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, PlayerActive) else androidx.compose.foundation.BorderStroke(1.dp, PlayerInactive.copy(alpha = 0.3f))
                                 ) {
                                     Text(
                                         text = option,
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                                        color = if (isSelected) PlayerActive else PlayerDormant,
+                                        color = if (isSelected) PlayerActive else PlayerInactive,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -82,7 +82,7 @@ class AudioBrowseFragment : Fragment() {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(songs) { song ->
+                            items(songs, key = { it.id }) { song ->
                                 TrackRow(
                                     song = song,
                                     isActive = song.id == currentSong?.id,

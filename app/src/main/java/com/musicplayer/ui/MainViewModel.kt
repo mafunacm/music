@@ -219,6 +219,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return emptyList() // Placeholder, logic moved to loadPlaylist
     }
 
+    private val _viewingPlaylist = MutableStateFlow<List<Song>>(emptyList())
+    val viewingPlaylist: StateFlow<List<Song>> = _viewingPlaylist.asStateFlow()
+
+    companion object {
+        // Shared state between activities for viewing playlists
+        private val _sharedViewingPlaylist = MutableStateFlow<List<Song>>(emptyList())
+        val sharedViewingPlaylist: StateFlow<List<Song>> = _sharedViewingPlaylist.asStateFlow()
+        
+        private val _sharedPlaylistName = MutableStateFlow("")
+        val sharedPlaylistName: StateFlow<String> = _sharedPlaylistName.asStateFlow()
+    }
+
     fun loadPlaylist(name: String) {
         viewModelScope.launch {
             val songs = when (name) {
@@ -230,6 +242,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             playlistManager.setPlaylistName(name)
             _playlistName.value = name
+            _sharedPlaylistName.value = name
+            _sharedViewingPlaylist.value = songs
+            _viewingPlaylist.value = songs
+        }
+    }
+
+    fun playViewingPlaylist() {
+        val songs = _sharedViewingPlaylist.value
+        if (songs.isNotEmpty()) {
             playerManager.playPlaylist(songs, 0)
         }
     }

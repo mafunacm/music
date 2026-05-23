@@ -48,7 +48,9 @@ fun MiniPlayerBar(
     Box(
         modifier = modifier
             .padding(horizontal = 12.dp)
-            .padding(top = 8.dp, bottom = 12.dp)
+            .padding(top = 8.dp)
+            .navigationBarsPadding() // 4. Fixed player overlap with nav bar
+            .padding(bottom = 12.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xF914141C))
             .clickable { onOpen() }
@@ -70,7 +72,7 @@ fun MiniPlayerBar(
             }
 
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-                // Controls
+                // Row 1: Controls
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -147,31 +149,45 @@ fun MiniPlayerBar(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Track Info + Duration
+                // Row 2: Track Info + Duration
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(20.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.size(22.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = PlayerInactive.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(11.dp))
+                            Icon(Icons.Default.MusicNote, contentDescription = null, tint = PlayerInactive, modifier = Modifier.size(12.dp))
                         }
                     }
                     
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = song?.title ?: "Not Playing",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = song?.title ?: "Not Playing",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .basicMarquee(iterations = Int.MAX_VALUE)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // 5. Duration moved up to align with title
+                            Text(
+                                text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
+                                color = PlayerSubtext,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                         Text(
                             text = song?.artist ?: "Unknown Artist",
                             color = PlayerSubtext,
@@ -180,12 +196,12 @@ fun MiniPlayerBar(
                         )
                     }
 
-                    // Duration display
-                    Text(
-                        text = "${formatDuration(currentTime)} / ${formatDuration(totalDuration)}",
-                        color = PlayerSubtext,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                    // Up caret in highlight color
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Open",
+                        tint = PlayerInactive,
+                        modifier = Modifier.size(20.dp)
                     )
                     
                     Icon(

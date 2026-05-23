@@ -47,18 +47,28 @@ fun TrackRow(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val revealWidthPx = with(density) { 120.dp.toPx() }
+    val revealWidthPx = remember(density) { with(density) { 120.dp.toPx() } }
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
+
+    val activeGradient = remember {
+        Brush.linearGradient(
+            listOf(PlayerActive.copy(alpha = 0.18f), AccentPurple.copy(alpha = 0.28f))
+        )
+    }
+    
+    val dormantGradient = remember {
+        Brush.linearGradient(listOf(Color(0xFF1C1C1C), Color(0xFF1C1C1C)))
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(PlayerInactive.copy(alpha = 0.2f)) // Highlight color background on swipe
+            .background(PlayerInactive.copy(alpha = 0.2f))
     ) {
-        // Revealed Menu (Favorite and Add icons) - Background layer
+        // Revealed Menu
         Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -89,11 +99,11 @@ fun TrackRow(
             }
         }
 
-        // Foreground Content - This must be OPAQUE to cover background icons
+        // Foreground Content
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-                .pointerInput(Unit) {
+                .pointerInput(revealWidthPx) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             val target = if (offsetX.value < -revealWidthPx / 2) -revealWidthPx else 0f
@@ -111,7 +121,7 @@ fun TrackRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(
-                    if (isActive) Color(0xFF1E1E1E) else Color(0xFF121212) // Fully opaque
+                    if (isActive) Color(0xFF1E1E1E) else Color(0xFF121212)
                 )
                 .border(
                     width = 1.dp,
@@ -136,15 +146,7 @@ fun TrackRow(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isActive) {
-                                Brush.linearGradient(
-                                    listOf(PlayerActive.copy(alpha = 0.18f), AccentPurple.copy(alpha = 0.28f))
-                                )
-                            } else {
-                                Brush.linearGradient(listOf(Color(0xFF1C1C1C), Color(0xFF1C1C1C)))
-                            }
-                        ),
+                        .background(if (isActive) activeGradient else dormantGradient),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isActive && isPlaying) {
@@ -175,7 +177,6 @@ fun TrackRow(
                     )
                 }
 
-                // Reversed caret (<) in highlight color
                 Icon(
                     Icons.Default.ChevronLeft,
                     contentDescription = null,

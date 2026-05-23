@@ -69,8 +69,8 @@ class PlayerFragment : Fragment() {
         }
 
         LaunchedEffect(Unit) {
-            val activity = activity as? MainActivity ?: return@LaunchedEffect
-            val bottomSheet = activity.findViewById<View>(R.id.playerBottomSheet)
+            val act = activity ?: return@LaunchedEffect
+            val bottomSheet = act.findViewById<View>(R.id.playerBottomSheet) ?: return@LaunchedEffect
             val behavior = BottomSheetBehavior.from(bottomSheet)
             behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                 override fun onStateChanged(bottomSheet: View, newState: Int) {}
@@ -95,7 +95,7 @@ class PlayerFragment : Fragment() {
                     repeatMode = repeatMode,
                     currentTime = currentTime,
                     totalDuration = totalDuration,
-                    onClose = { (activity as? MainActivity)?.let { BottomSheetBehavior.from(it.findViewById<View>(R.id.playerBottomSheet)).state = BottomSheetBehavior.STATE_COLLAPSED } },
+                    onClose = { activity?.findViewById<View>(R.id.playerBottomSheet)?.let { BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_COLLAPSED } },
                     onPlayPause = { viewModel.togglePlayPause() },
                     onShuffle = { viewModel.toggleShuffle() },
                     onRepeat = { viewModel.toggleRepeatMode() },
@@ -127,7 +127,7 @@ class PlayerFragment : Fragment() {
                         onNext = { viewModel.playNext() },
                         onShuffle = { viewModel.toggleShuffle() },
                         onRepeat = { viewModel.toggleRepeatMode() },
-                        onOpen = { (activity as? MainActivity)?.let { BottomSheetBehavior.from(it.findViewById<View>(R.id.playerBottomSheet)).state = BottomSheetBehavior.STATE_EXPANDED } }
+                        onOpen = { activity?.findViewById<View>(R.id.playerBottomSheet)?.let { BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED } }
                     )
                 }
             }

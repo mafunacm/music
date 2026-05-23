@@ -9,10 +9,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import androidx.media3.common.util.UnstableApi
 import com.musicplayer.PlaylistActivity
 import com.musicplayer.ui.MainViewModel
 import com.musicplayer.ui.theme.MusicPlayerTheme
+import com.musicplayer.ui.theme.PlayerInactive
 
 @UnstableApi
 class PlaylistBrowseFragment : Fragment() {
@@ -47,12 +49,27 @@ class PlaylistBrowseFragment : Fragment() {
                     val basePlaylists = listOf("Favorites", "Recently Played")
                     val allPlaylists = basePlaylists + customPlaylists
 
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(allPlaylists) { name ->
-                            PlaylistRow(name) {
-                                viewModel.loadPlaylist(name)
-                                startActivity(Intent(requireContext(), PlaylistActivity::class.java))
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(allPlaylists) { name ->
+                                PlaylistRow(name) {
+                                    viewModel.loadPlaylist(name)
+                                    startActivity(Intent(requireContext(), PlaylistActivity::class.java))
+                                }
                             }
+                        }
+
+                        // 7. Playlist tab FAB to add new playlist in highlight color
+                        FloatingActionButton(
+                            onClick = { showCreatePlaylistDialog() },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(24.dp),
+                            shape = CircleShape,
+                            containerColor = PlayerInactive,
+                            contentColor = Color.Black
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add Playlist")
                         }
                     }
                 }
@@ -73,6 +90,22 @@ class PlaylistBrowseFragment : Fragment() {
             Icon(Icons.AutoMirrored.Filled.PlaylistPlay, contentDescription = null, tint = Color.Gray)
             Text(text = name, color = Color.White, fontSize = 16.sp)
         }
+    }
+
+    private fun showCreatePlaylistDialog() {
+        val input = android.widget.EditText(requireContext())
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("New Playlist")
+            .setView(input)
+            .setPositiveButton("Create") { _, _ ->
+                val name = input.text.toString()
+                if (name.isNotEmpty()) {
+                    viewModel.createPlaylist(name)
+                    viewModel.refreshCustomPlaylists()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -70,14 +70,26 @@ class MainActivity : AppCompatActivity() {
             // Apply top padding to avoid status bar overlap
             binding.mainContentContainer.updatePadding(top = systemBars.top)
 
-            // Calculate the Peek Height including the Navigation Bar
+            // Calculate the Peek Height dynamically (Nav Bar height in dp + 2)
             val density = resources.displayMetrics.density
+            val navBarDp = systemBars.bottom / density
+            // Using your formula (navBar + 2) but ensuring a minimum of 85dp so UI doesn't break
+            val dynamicPlayerHeight = (navBarDp + 2).coerceAtLeast(85f)
+            
             val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-            val peekHeightPx = (140 * density).toInt() + systemBars.bottom
+            val peekHeightPx = (dynamicPlayerHeight * density).toInt() + systemBars.bottom
             behavior.peekHeight = peekHeightPx
 
-            // Apply bottom padding to the list container so items don't go under the player
-            binding.viewPager.updatePadding(bottom = peekHeightPx)
+            // Dynamic black area: 
+            // Before play (miniplayer GONE): systemBars.bottom
+            // During play (miniplayer VISIBLE): peekHeightPx
+            binding.root.setBackgroundColor(android.graphics.Color.BLACK)
+            
+            // We use a property to track current visible padding requirement
+            val currentSong = viewModel.currentSong.value
+            val bottomPadding = if (currentSong != null) peekHeightPx else systemBars.bottom
+            
+            binding.viewPager.updatePadding(bottom = bottomPadding)
             binding.viewPager.clipToPadding = true
 
             insets
@@ -139,7 +151,11 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.currentSong.collectLatest { song ->
-                binding.playerBottomSheet.visibility = if (song != null) View.VISIBLE else View.GONE
+                val isVisible = song != null
+                binding.playerBottomSheet.visibility = if (isVisible) View.VISIBLE else View.GONE
+                
+                // Trigger an inset update to adjust the black area height
+                ViewCompat.requestApplyInsets(binding.root)
             }
         }
     }
