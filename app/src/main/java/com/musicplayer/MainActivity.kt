@@ -5,7 +5,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.Menu
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
@@ -18,48 +17,45 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.common.util.concurrent.ListenableFuture
 import com.musicplayer.adapters.ViewPagerAdapter
 import com.musicplayer.databinding.ActivityMainBinding
-import com.google.common.util.concurrent.ListenableFuture
-import com.musicplayer.fragments.AudioBrowseFragment
 import com.musicplayer.fragments.FolderBrowseFragment
-import com.musicplayer.fragments.PlaylistBrowseFragment
-import com.musicplayer.fragments.VideoBrowseFragment
 import com.musicplayer.fragments.VideoFolderBrowseFragment
-import com.musicplayer.fragments.EventFragment
 import com.musicplayer.models.MediaItem
 import com.musicplayer.models.MediaType
 import com.musicplayer.models.Song
 import com.musicplayer.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-
+import androidx.core.view.WindowCompat
+import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.updatePadding
-import androidx.core.view.WindowCompat
-
 @UnstableApi
 class MainActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityMainBinding
     val viewModel: MainViewModel by viewModels()
-    private val appDao by lazy { com.musicplayer.database.AppDatabase.getDatabase(this).appDao() }
+
+    private val appDao by lazy {
+        com.musicplayer.database.AppDatabase.getDatabase(this).appDao()
+    }
+
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-       // WindowCompat.setDecorFitsSystemWindows(window, true)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.mainContentContainer.updatePadding(top = systemBars.top)
+            v.setPadding(0, systemBars.top, 0, systemBars.bottom)
             insets
         }
 
@@ -69,43 +65,81 @@ class MainActivity : AppCompatActivity() {
         setupPlayerBottomSheet()
         observeViewModel()
 
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-                if (behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
-                    behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                    return
-                }
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
 
-                val currentFragment = supportFragmentManager.findFragmentByTag("f" + binding.viewPager.currentItem)
-                if ((currentFragment is FolderBrowseFragment && currentFragment.handleBackPress()) ||
-                    (currentFragment is VideoFolderBrowseFragment && currentFragment.handleBackPress())) {
-                    return
-                }
+                    val behavior =
+                        BottomSheetBehavior.from(binding.playerBottomSheet)
 
-                isEnabled = false
-                onBackPressedDispatcher.onBackPressed()
-                isEnabled = true
+                    if (behavior.state ==
+                        BottomSheetBehavior.STATE_EXPANDED
+                    ) {
+                        behavior.state =
+                            BottomSheetBehavior.STATE_COLLAPSED
+                        return
+                    }
+
+                    val currentFragment =
+                        supportFragmentManager.findFragmentByTag(
+                            "f" + binding.viewPager.currentItem
+                        )
+
+                    if (
+                        (currentFragment is FolderBrowseFragment &&
+                                currentFragment.handleBackPress()) ||
+                        (currentFragment is VideoFolderBrowseFragment &&
+                                currentFragment.handleBackPress())
+                    ) {
+                        return
+                    }
+
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
             }
-        })
+        )
     }
 
     private fun setupPlayerBottomSheet() {
-        val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {}
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
-        })
+        val behavior =
+            BottomSheetBehavior.from(binding.playerBottomSheet)
+
+        behavior.addBottomSheetCallback(
+            object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(
+                    bottomSheet: View,
+                    newState: Int
+                ) {}
+
+                override fun onSlide(
+                    bottomSheet: View,
+                    slideOffset: Float
+                ) {}
+            }
+        )
     }
 
     override fun onStart() {
         super.onStart()
-        val sessionToken = SessionToken(this, ComponentName(this, com.musicplayer.services.MediaPlaybackService::class.java))
-        controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+
+        val sessionToken = SessionToken(
+            this,
+            ComponentName(
+                this,
+                com.musicplayer.services.MediaPlaybackService::class.java
+            )
+        )
+
+        controllerFuture =
+            MediaController.Builder(this, sessionToken).buildAsync()
     }
 
     override fun onStop() {
         super.onStop()
+
         controllerFuture?.let {
             MediaController.releaseFuture(it)
         }
@@ -114,13 +148,18 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.currentSong.collectLatest { song ->
+
                 val isVisible = song != null
-                binding.playerBottomSheet.visibility = if (isVisible) View.VISIBLE else View.GONE
-                ViewCompat.requestApplyInsets(binding.root)
+
+                binding.playerBottomSheet.visibility =
+                    if (isVisible) View.VISIBLE else View.GONE
             }
         }
     }
 
+    // ---------------------------
+    // TABS
+    // ---------------------------
     private fun setupTabs() {
 
         val adapter = ViewPagerAdapter(this)
@@ -136,28 +175,30 @@ class MainActivity : AppCompatActivity() {
                 val textView = android.widget.TextView(this)
 
                 textView.text =
-                    if (position == 4) "BUY"
-                    else "EVENT"
+                    if (position == 4) "BUY" else "EVENT"
 
-                textView.setTextColor(
-                    if (tab.isSelected)
-                        getColor(R.color.color_active)
-                    else
-                        getColor(R.color.highlight)
+                textView.setTypeface(
+                    null,
+                    android.graphics.Typeface.BOLD
                 )
 
-                textView.setTypeface(null, android.graphics.Typeface.BOLD)
-                textView.gravity = android.view.Gravity.CENTER
+                textView.gravity =
+                    android.view.Gravity.CENTER
 
                 tab.customView = textView
 
             } else {
 
                 val customView =
-                    layoutInflater.inflate(R.layout.custom_tab, null)
+                    layoutInflater.inflate(
+                        R.layout.custom_tab,
+                        null
+                    )
 
                 val iconView =
-                    customView.findViewById<ImageView>(R.id.tabIcon)
+                    customView.findViewById<ImageView>(
+                        R.id.tabIcon
+                    )
 
                 iconView.setImageResource(
                     when (position) {
@@ -170,91 +211,158 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
 
-                if (position == 6) {
-                    iconView.imageTintList =
-                        android.content.res.ColorStateList.valueOf(
-                            if (tab.isSelected)
-                                getColor(R.color.color_active)
-                            else
-                                getColor(R.color.domant)
-                        )
-                }
-
                 tab.customView = customView
             }
 
         }.attach()
 
-        binding.tabLayout.addOnTabSelectedListener(
-            object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
-
-                override fun onTabSelected(
-                    tab: com.google.android.material.tabs.TabLayout.Tab
-                ) {
-
-                    val view = tab.customView
-
-                    if (view is android.widget.TextView) {
-
-                        view.setTextColor(
-                            getColor(R.color.color_active)
-                        )
-
-                    } else if (tab.position == 6) {
-
-                        val iconView =
-                            view?.findViewById<ImageView>(R.id.tabIcon)
-
-                        iconView?.imageTintList =
-                            android.content.res.ColorStateList.valueOf(
-                                getColor(R.color.color_active)
-                            )
-                    }
-                }
-
-                override fun onTabUnselected(
-                    tab: com.google.android.material.tabs.TabLayout.Tab
-                ) {
-
-                    val view = tab.customView
-
-                    if (view is android.widget.TextView) {
-
-                        view.setTextColor(
-                            getColor(R.color.highlight)
-                        )
-
-                    } else if (tab.position == 6) {
-
-                        val iconView =
-                            view?.findViewById<ImageView>(R.id.tabIcon)
-
-                        iconView?.imageTintList =
-                            android.content.res.ColorStateList.valueOf(
-                                getColor(R.color.domant)
-                            )
-                    }
-                }
-
-                override fun onTabReselected(
-                    tab: com.google.android.material.tabs.TabLayout.Tab
-                ) {
-                }
-            }
-        )
-
-        binding.tabLayout.setSelectedTabIndicatorColor(
-            getColor(R.color.color_active)
-        )
-
         binding.tabLayout.tabIconTint = null
+    }
+
+    // ---------------------------
+    // PERMISSIONS
+    // ---------------------------
+    private fun checkPermissions() {
+
+        val permissions =
+            if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.TIRAMISU
+            ) {
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            } else {
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            }
+
+        val needPermissions =
+            permissions.filter {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    it
+                ) != PackageManager.PERMISSION_GRANTED
+            }.toTypedArray()
+
+        if (needPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                needPermissions,
+                100
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        )
+
+        if (requestCode != 100 ||
+            !grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        ) {
+            Toast.makeText(
+                this,
+                "Permissions required",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            viewModel.loadMedia()
+        }
+    }
+
+    // ---------------------------
+    // MEDIA PLAY
+    // ---------------------------
+    fun playMediaItem(
+        item: MediaItem,
+        playlist: List<MediaItem>
+    ) {
+
+        if (item.type == MediaType.VIDEO) {
+
+            viewModel.pauseMedia()
+
+            val intent =
+                Intent(this, VideoPlayerActivity::class.java)
+
+            val uris = ArrayList<String>()
+
+            playlist.forEach {
+                uris.add(it.uri.toString())
+            }
+
+            intent.putStringArrayListExtra(
+                "VIDEO_URIS",
+                uris
+            )
+
+            intent.putExtra(
+                "START_INDEX",
+                playlist.indexOf(item)
+            )
+
+            startActivity(intent)
+
+        } else {
+
+            val folderName =
+                item.folderPath.substringAfterLast(
+                    java.io.File.separator
+                )
+
+            viewModel.playSong(
+                item.toSong(),
+                playlist.map { it.toSong() },
+                folderName
+            )
+        }
+    }
+
+    // ---------------------------
+    // UI HELPERS
+    // ---------------------------
+    private fun setupSelectionMenu() {
+        binding.btnCloseSelection.setOnClickListener {
+            hideSelectionMenu()
+        }
+    }
+
+    fun hideSelectionMenu() {
+        binding.folderSelectionMenu.visibility = View.GONE
+    }
+
+    fun showSelectionMenu(
+        folderName: String,
+        onPlayAll: () -> Unit
+    ) {
+        binding.tvSelectedFolderName.text = folderName
+        binding.folderSelectionMenu.visibility = View.VISIBLE
+
+        binding.btnPlayAll.setOnClickListener {
+            onPlayAll()
+            hideSelectionMenu()
+        }
     }
 
     fun showAddToPlaylistDialog(song: Song) {
         lifecycleScope.launch {
             val playlists = appDao.getAllPlaylistNames()
             if (playlists.isEmpty()) {
-                Toast.makeText(this@MainActivity, "No custom playlists found. Create one in the Playlists tab.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@MainActivity,
+                    "No custom playlists found. Create one in the Playlists tab.",
+                    Toast.LENGTH_LONG
+                ).show()
                 return@launch
             }
 
@@ -264,116 +372,14 @@ class MainActivity : AppCompatActivity() {
             builder.setItems(playlists.toTypedArray()) { _, which ->
                 val selectedPlaylist = playlists[which]
                 viewModel.addSongToPlaylist(selectedPlaylist, song)
-                Toast.makeText(this@MainActivity, "Added to $selectedPlaylist", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@MainActivity,
+                    "Added to $selectedPlaylist",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             builder.setNegativeButton("Cancel", null)
             builder.show()
-        }
-    }
-
-    fun showSettingsPopup(view: View) {
-        val popup = android.widget.PopupMenu(this, view)
-        popup.menu.add("Eq")
-        popup.menu.add("Theme")
-        popup.menu.add("About")
-
-        popup.setOnMenuItemClickListener { item ->
-            when (item.title) {
-                "Eq" -> {
-                    com.musicplayer.fragments.EqualizerFragment.newInstance().show(supportFragmentManager, "equalizer")
-                    true
-                }
-                "Theme" -> {
-                    Toast.makeText(this, "Theme settings coming soon", Toast.LENGTH_SHORT).show()
-                    true
-                }
-                "About" -> {
-                    androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("About")
-                        .setMessage("Music Player v1.0\nAn expert-crafted media experience.")
-                        .setPositiveButton("OK", null)
-                        .show()
-                    true
-                }
-                else -> false
-            }
-        }
-        popup.show()
-    }
-
-    private fun setupSelectionMenu() {
-        binding.btnCloseSelection.setOnClickListener {
-            hideSelectionMenu()
-        }
-    }
-
-    fun hideSelectionMenu() {
-        binding.folderSelectionMenu.visibility = android.view.View.GONE
-        val currentFragment = supportFragmentManager.findFragmentByTag("f" + binding.viewPager.currentItem)
-        if (currentFragment is FolderBrowseFragment) {
-            currentFragment.onFolderSelected(null, null)
-        } else if (currentFragment is VideoFolderBrowseFragment) {
-            currentFragment.handleBackPress()
-        }
-    }
-
-    @androidx.media3.common.util.UnstableApi
-    fun playMediaItem(item: MediaItem, playlist: List<MediaItem>) {
-        if (item.type == MediaType.VIDEO) {
-            viewModel.pauseMedia()
-            val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-                val uris = ArrayList<String>()
-                playlist.forEach { uris.add(it.uri.toString()) }
-                putStringArrayListExtra("VIDEO_URIS", uris)
-                putExtra("START_INDEX", playlist.indexOf(item))
-            }
-            startActivity(intent)
-        } else {
-            val folderName = item.folderPath.substringAfterLast(java.io.File.separator)
-            viewModel.playSong(item.toSong(), playlist.map { it.toSong() }, folderName)
-        }
-    }
-
-    fun showSelectionMenu(folderName: String, onPlayAll: () -> Unit) {
-        binding.tvSelectedFolderName.text = folderName
-        binding.folderSelectionMenu.visibility = android.view.View.VISIBLE
-        binding.btnPlayAll.setOnClickListener {
-            onPlayAll()
-            hideSelectionMenu()
-            startActivity(Intent(this, PlaylistActivity::class.java))
-        }
-    }
-
-    private fun checkPermissions() {
-        val permissions = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.READ_MEDIA_AUDIO,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.POST_NOTIFICATIONS
-            )
-        } else {
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-
-        val needPermissions = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
-        if (needPermissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, needPermissions, 100)
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != 100 || !grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            Toast.makeText(this, "Permissions required", Toast.LENGTH_SHORT).show()
-        } else {
-            viewModel.loadMedia()
         }
     }
 }
