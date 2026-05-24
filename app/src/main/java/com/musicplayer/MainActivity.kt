@@ -40,6 +40,7 @@ import androidx.media3.common.util.UnstableApi
 
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.updatePadding
+import androidx.core.view.WindowCompat
 
 @UnstableApi
 class MainActivity : AppCompatActivity() {
@@ -48,50 +49,17 @@ class MainActivity : AppCompatActivity() {
     private val appDao by lazy { com.musicplayer.database.AppDatabase.getDatabase(this).appDao() }
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
-    private val fragments = listOf(
-        AudioBrowseFragment.newInstance(),
-        FolderBrowseFragment.newInstance(),
-        VideoFolderBrowseFragment.newInstance(),
-        PlaylistBrowseFragment.newInstance(),
-        com.musicplayer.fragments.BuyFragment.newInstance(),
-        EventFragment.newInstance(),
-        com.musicplayer.fragments.SettingsFragment.newInstance()
-    )
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+       // WindowCompat.setDecorFitsSystemWindows(window, true)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            
-            // Apply top padding to avoid status bar overlap
             binding.mainContentContainer.updatePadding(top = systemBars.top)
-
-            // Calculate the Peek Height dynamically (Nav Bar height in dp + 2)
-            val density = resources.displayMetrics.density
-            val navBarDp = systemBars.bottom / density
-            // Using your formula (navBar + 2) but ensuring a minimum of 85dp so UI doesn't break
-            val dynamicPlayerHeight = (navBarDp + 2).coerceAtLeast(85f)
-            
-            val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
-            val peekHeightPx = (dynamicPlayerHeight * density).toInt() + systemBars.bottom
-            behavior.peekHeight = peekHeightPx
-
-            // Dynamic black area: 
-            // Before play (miniplayer GONE): systemBars.bottom
-            // During play (miniplayer VISIBLE): peekHeightPx
-            binding.root.setBackgroundColor(android.graphics.Color.BLACK)
-            
-            // We use a property to track current visible padding requirement
-            val currentSong = viewModel.currentSong.value
-            val bottomPadding = if (currentSong != null) peekHeightPx else systemBars.bottom
-            
-            binding.viewPager.updatePadding(bottom = bottomPadding)
-            binding.viewPager.clipToPadding = true
-
             insets
         }
 
@@ -109,12 +77,12 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
 
-                val currentFragment = fragments[binding.viewPager.currentItem]
+                val currentFragment = supportFragmentManager.findFragmentByTag("f" + binding.viewPager.currentItem)
                 if ((currentFragment is FolderBrowseFragment && currentFragment.handleBackPress()) ||
                     (currentFragment is VideoFolderBrowseFragment && currentFragment.handleBackPress())) {
                     return
                 }
-                
+
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
                 isEnabled = true
@@ -125,13 +93,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupPlayerBottomSheet() {
         val behavior = BottomSheetBehavior.from(binding.playerBottomSheet)
         behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                // Potential logic for state changes
-            }
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Logic for fading elements handled inside PlayerFragment if needed, 
-                // but we'll try to keep it simple here.
-            }
+            override fun onStateChanged(bottomSheet: View, newState: Int) {}
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
         })
     }
 
@@ -153,70 +116,137 @@ class MainActivity : AppCompatActivity() {
             viewModel.currentSong.collectLatest { song ->
                 val isVisible = song != null
                 binding.playerBottomSheet.visibility = if (isVisible) View.VISIBLE else View.GONE
-                
-                // Trigger an inset update to adjust the black area height
                 ViewCompat.requestApplyInsets(binding.root)
             }
         }
     }
 
     private fun setupTabs() {
-        val adapter = ViewPagerAdapter(supportFragmentManager, lifecycle, fragments)
+
+        val adapter = ViewPagerAdapter(this)
+
         binding.viewPager.adapter = adapter
         binding.viewPager.isUserInputEnabled = false
+        binding.viewPager.offscreenPageLimit = 7
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+
             if (position == 4 || position == 5) {
+
                 val textView = android.widget.TextView(this)
-                textView.text = if (position == 4) "BUY" else "EVENT"
-                textView.setTextColor(if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.highlight))
+
+                textView.text =
+                    if (position == 4) "BUY"
+                    else "EVENT"
+
+                textView.setTextColor(
+                    if (tab.isSelected)
+                        getColor(R.color.color_active)
+                    else
+                        getColor(R.color.highlight)
+                )
+
                 textView.setTypeface(null, android.graphics.Typeface.BOLD)
                 textView.gravity = android.view.Gravity.CENTER
+
                 tab.customView = textView
+
             } else {
-                val customView = layoutInflater.inflate(R.layout.custom_tab, null)
-                val iconView = customView.findViewById<ImageView>(R.id.tabIcon)
-                iconView.setImageResource(when (position) {
-                    0 -> R.drawable.ic_tab_music
-                    1 -> R.drawable.ic_tab_music_folder
-                    2 -> R.drawable.ic_tab_video_folder
-                    3 -> R.drawable.ic_tab_playlist
-                    else -> R.drawable.ic_tab_settings
-                })
-                
+
+                val customView =
+                    layoutInflater.inflate(R.layout.custom_tab, null)
+
+                val iconView =
+                    customView.findViewById<ImageView>(R.id.tabIcon)
+
+                iconView.setImageResource(
+                    when (position) {
+                        0 -> R.drawable.ic_tab_music
+                        1 -> R.drawable.ic_tab_music_folder
+                        2 -> R.drawable.ic_tab_video_folder
+                        3 -> R.drawable.ic_tab_playlist
+                        6 -> R.drawable.ic_tab_settings
+                        else -> R.drawable.ic_tab_music
+                    }
+                )
+
                 if (position == 6) {
-                    iconView.imageTintList = android.content.res.ColorStateList.valueOf(
-                        if (tab.isSelected) getColor(R.color.color_active) else getColor(R.color.domant)
-                    )
+                    iconView.imageTintList =
+                        android.content.res.ColorStateList.valueOf(
+                            if (tab.isSelected)
+                                getColor(R.color.color_active)
+                            else
+                                getColor(R.color.domant)
+                        )
                 }
-                
+
                 tab.customView = customView
             }
+
         }.attach()
-        
-        binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
-                val view = tab.customView
-                if (view is android.widget.TextView) {
-                    view.setTextColor(getColor(R.color.color_active))
-                } else if (tab.position == 6) {
-                    val iconView = view?.findViewById<ImageView>(R.id.tabIcon)
-                    iconView?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.color_active))
+
+        binding.tabLayout.addOnTabSelectedListener(
+            object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+
+                override fun onTabSelected(
+                    tab: com.google.android.material.tabs.TabLayout.Tab
+                ) {
+
+                    val view = tab.customView
+
+                    if (view is android.widget.TextView) {
+
+                        view.setTextColor(
+                            getColor(R.color.color_active)
+                        )
+
+                    } else if (tab.position == 6) {
+
+                        val iconView =
+                            view?.findViewById<ImageView>(R.id.tabIcon)
+
+                        iconView?.imageTintList =
+                            android.content.res.ColorStateList.valueOf(
+                                getColor(R.color.color_active)
+                            )
+                    }
+                }
+
+                override fun onTabUnselected(
+                    tab: com.google.android.material.tabs.TabLayout.Tab
+                ) {
+
+                    val view = tab.customView
+
+                    if (view is android.widget.TextView) {
+
+                        view.setTextColor(
+                            getColor(R.color.highlight)
+                        )
+
+                    } else if (tab.position == 6) {
+
+                        val iconView =
+                            view?.findViewById<ImageView>(R.id.tabIcon)
+
+                        iconView?.imageTintList =
+                            android.content.res.ColorStateList.valueOf(
+                                getColor(R.color.domant)
+                            )
+                    }
+                }
+
+                override fun onTabReselected(
+                    tab: com.google.android.material.tabs.TabLayout.Tab
+                ) {
                 }
             }
-            override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {
-                val view = tab.customView
-                if (view is android.widget.TextView) {
-                    view.setTextColor(getColor(R.color.highlight))
-                } else if (tab.position == 6) {
-                    val iconView = view?.findViewById<ImageView>(R.id.tabIcon)
-                    iconView?.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.domant))
-                }
-            }
-            override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
-        })
-        
-        binding.tabLayout.setSelectedTabIndicatorColor(getColor(R.color.color_active))
+        )
+
+        binding.tabLayout.setSelectedTabIndicatorColor(
+            getColor(R.color.color_active)
+        )
+
         binding.tabLayout.tabIconTint = null
     }
 
@@ -230,7 +260,7 @@ class MainActivity : AppCompatActivity() {
 
             val builder = androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
             builder.setTitle("Add to Playlist")
-            
+
             builder.setItems(playlists.toTypedArray()) { _, which ->
                 val selectedPlaylist = playlists[which]
                 viewModel.addSongToPlaylist(selectedPlaylist, song)
@@ -246,7 +276,7 @@ class MainActivity : AppCompatActivity() {
         popup.menu.add("Eq")
         popup.menu.add("Theme")
         popup.menu.add("About")
-        
+
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Eq" -> {
@@ -279,18 +309,17 @@ class MainActivity : AppCompatActivity() {
 
     fun hideSelectionMenu() {
         binding.folderSelectionMenu.visibility = android.view.View.GONE
-        val currentFragment = fragments[binding.viewPager.currentItem]
+        val currentFragment = supportFragmentManager.findFragmentByTag("f" + binding.viewPager.currentItem)
         if (currentFragment is FolderBrowseFragment) {
             currentFragment.onFolderSelected(null, null)
         } else if (currentFragment is VideoFolderBrowseFragment) {
-            currentFragment.handleBackPress() // Reset selection state if needed
+            currentFragment.handleBackPress()
         }
     }
 
     @androidx.media3.common.util.UnstableApi
     fun playMediaItem(item: MediaItem, playlist: List<MediaItem>) {
         if (item.type == MediaType.VIDEO) {
-            // Stop audio if video is starting
             viewModel.pauseMedia()
             val intent = Intent(this, VideoPlayerActivity::class.java).apply {
                 val uris = ArrayList<String>()
@@ -300,7 +329,6 @@ class MainActivity : AppCompatActivity() {
             }
             startActivity(intent)
         } else {
-            // Convert to Song and play via ViewModel if it's audio
             val folderName = item.folderPath.substringAfterLast(java.io.File.separator)
             viewModel.playSong(item.toSong(), playlist.map { it.toSong() }, folderName)
         }
@@ -312,8 +340,6 @@ class MainActivity : AppCompatActivity() {
         binding.btnPlayAll.setOnClickListener {
             onPlayAll()
             hideSelectionMenu()
-            // Opening PlaylistActivity is optional now since we have the bottom sheet player,
-            // but let's keep it if the user wants to see the list.
             startActivity(Intent(this, PlaylistActivity::class.java))
         }
     }
